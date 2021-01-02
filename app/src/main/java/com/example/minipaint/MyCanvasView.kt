@@ -21,6 +21,7 @@ private const val STROKE_WIDTH = 12f
 
 class MyCanvasView(context: Context): View(context) {
     private val circleRadius = 30f
+    private var isFigureDone = false
     private val drawColor = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
 
     private lateinit var extraCanvas: Canvas
@@ -76,14 +77,8 @@ class MyCanvasView(context: Context): View(context) {
     }
     private fun touchUp() {
 
-        if(!isFirstTouch) {
-
-
+        if(!isFirstTouch && !isFigureDone) {
                 listPoints.add(MyPoint(motionTouchEventX.toInt(),motionTouchEventY.toInt()))
-
-
-
-
         }
 
         extraCanvas.drawColor(backgroundColor)
@@ -112,7 +107,7 @@ class MyCanvasView(context: Context): View(context) {
 
           listPoints.last().distance = lastDistOrZero
 
-        if(!isFirstTouch) {
+        if(!isFirstTouch && !isFigureDone ) {
             val dest = calcDistance(listPoints.last().x,listPoints.last().y ,
                     (listPoints.get(listPoints.size-2)).x,(listPoints.get(listPoints.size-2).y))
 
@@ -125,9 +120,13 @@ class MyCanvasView(context: Context): View(context) {
             var XXX = listPoints.get(listPoints.size-2).x +  dest*roundOffDecimal(tan.get(0))
             var YYY = listPoints.get(listPoints.size-2).y +  dest*roundOffDecimal(tan.get(1))
 
-            Log.d("log", "XXX = ${XXX} YYY = ${YYY} ")
-            listPoints.last().x = XXX.toInt()
-            listPoints.last().y = YYY.toInt()
+
+
+                Log.d("log", "XXX = ${XXX} YYY = ${YYY} ")
+                listPoints.last().x = XXX.toInt()
+                listPoints.last().y = YYY.toInt()
+
+
 
             var h = calcDistance(listPoints.get(0).x,listPoints.get(0).y, motionTouchEventX.toInt(), motionTouchEventY.toInt())
             Log.d("log" ,"dist = $h")
@@ -137,6 +136,7 @@ class MyCanvasView(context: Context): View(context) {
                 listPoints.last().y = listPoints.get(0).y
                 XXX= listPoints.get(0).x.toFloat()
                 YYY = listPoints.get(0).y.toFloat()
+                isFigureDone = true
             }
 
 
@@ -159,7 +159,7 @@ class MyCanvasView(context: Context): View(context) {
             listPoints.forEach{
                 str!!.append("[${it.x} , ${it.y} , dist ${it.distance}]")
             }
-    //    Log.d("Log", str.toString())
+        Log.d("Log", str.toString())
 
 
 
