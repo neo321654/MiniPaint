@@ -96,15 +96,8 @@ class MyCanvasView(context: Context): View(context) {
                     (listPoints.get(listPoints.size-2)).x,(listPoints.get(listPoints.size-2).y))
             //Рассчитываем последнюю точку с учетом длины последнего отрезка и округлённого поворота последней точки
             //для того чтобы угол был либо 90 либо 45
-            val calcPoints = calcLastPoint(listPoints,tan,dest)
+            listPoints = calcLastPoint(listPoints,tan,dest)
             //Меняем последнюю точку в листе , но не рисуем её покачто
-                listPoints.last().x = calcPoints[0].toInt()
-                listPoints.last().y = calcPoints[1].toInt()
-                listPoints.last().distance = dest
-                listPoints.last().mCos = calcPoints[2]
-                listPoints.last().mSin = calcPoints[3]
-                listPoints.last().middleX = calcPoints[4].toInt()
-                listPoints.last().middleY = calcPoints[5].toInt()
             //Находим расстояние от последней рассчитаной точки до самой первой точки
             //и если оно меньше чем радиус нашим кружков, значит мы попали в кружок
             //и замыкаем чертёж автоматически и фигура заканчивается
@@ -112,22 +105,26 @@ class MyCanvasView(context: Context): View(context) {
                         if(circleRadius >= h){
                             listPoints.last().x = listPoints[0].x
                             listPoints.last().y = listPoints[0].y
-                            calcPoints[0]= listPoints[0].x.toFloat()
-                            calcPoints[1] = listPoints[0].y.toFloat()
+                            listPoints.last().middleX = (listPoints.get(listPoints.size-2).x + listPoints[0].x)/2
+                            listPoints.last().middleY = (listPoints.get(listPoints.size-2).y + listPoints[0].y)/2
                             //Пересчитываю последнюю длину с учетом изменений
                             listPoints.last().distance = calcDistance(listPoints.get(listPoints.size-2).x,listPoints.get(listPoints.size-2).y
                             ,listPoints.last().x,listPoints.last().y)
                             isFigureDone = true
                      }
             //меняем последнюю точку пути в path на нашу расчитуннню
-            path.setLastPoint(calcPoints[0],calcPoints[1])
+            path.setLastPoint(listPoints.last().x.toFloat(), listPoints.last().y.toFloat())
             }
         //наносим на канву наш изменённый путь
         extraCanvas.drawPath(path, paint)
         //наносим кружки на наш путь
         listPoints.forEach{
             extraCanvas.drawCircle( it.x.toFloat(), it.y.toFloat(),circleRadius,paint)
-            extraCanvas.drawCircle( it.middleX.toFloat(), it.middleY.toFloat(),circleRadius,paint)
+        }
+        //Отрисвовываю средние круги , надо потом заменить на текст размеров
+        listPoints.forEach{
+            if(it.middleX != 0 && it.middleY!=0)
+           extraCanvas.drawCircle( it.middleX.toFloat(), it.middleY.toFloat(),circleRadius,paint)
         }
 
         path.reset()
@@ -144,18 +141,18 @@ class MyCanvasView(context: Context): View(context) {
 
 
     }
-    fun calcLastPoint(listPoints: List<MyPoint>, tan: FloatArray, dest: Float): FloatArray {
-        val calPoints = FloatArray(6)
-        calPoints[2]  =  roundOffDecimal(tan[0])
-        calPoints[3]  =  roundOffDecimal(tan[1])
+    fun calcLastPoint(listPoints: MutableList<MyPoint>, tan: FloatArray, dest: Float): MutableList<MyPoint> {
+        listPoints.last().mCos = roundOffDecimal(tan[0])
+        listPoints.last().mSin = roundOffDecimal(tan[1])
 
-        calPoints[0] = listPoints[listPoints.size-2].x +  dest*calPoints[2]
-        calPoints[1]  = listPoints[listPoints.size-2].y +  dest*calPoints[3]
+        listPoints.last().x = (listPoints[listPoints.size-2].x +  dest*listPoints.last().mCos).toInt()
+        listPoints.last().y = (listPoints[listPoints.size-2].y +  dest*listPoints.last().mSin).toInt()
+        listPoints.last().distance = dest
 
-        calPoints[4] = listPoints[listPoints.size-2].x +  (dest/2)*calPoints[2]
-        calPoints[5] = listPoints[listPoints.size-2].y +  (dest/2)*calPoints[3]
+        listPoints.last().middleX = (listPoints[listPoints.size-2].x +  (dest/2)*listPoints.last().mCos).toInt()
+        listPoints.last().middleY = (listPoints[listPoints.size-2].y +  (dest/2)*listPoints.last().mSin).toInt()
 
-        return calPoints
+        return listPoints
     }
     fun roundOffDecimal(number: Float): Float {
         val df = DecimalFormat("#")
