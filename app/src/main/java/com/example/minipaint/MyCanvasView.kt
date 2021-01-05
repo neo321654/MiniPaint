@@ -7,13 +7,10 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import androidx.core.content.res.ResourcesCompat
-import java.lang.Math.acos
-import java.lang.Math.asin
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.util.*
 import kotlin.math.pow
-import kotlin.math.sqrt
 
 
 private const val STROKE_WIDTH = 12f
@@ -92,48 +89,44 @@ class MyCanvasView(context: Context): View(context) {
         var pos = FloatArray(2)
         var tan = FloatArray(2)
         pMeasure.getPosTan(pMeasureLenght, pos, tan)
-
         // Если не начало и не конец чертежа
         if(!isFirstTouch && !isFigureDone ) {
+            //Забираем длину последнего отрезка
             val dest = calcDistance(listPoints.last().x,listPoints.last().y ,
                     (listPoints.get(listPoints.size-2)).x,(listPoints.get(listPoints.size-2).y))
+            //Рассчитываем последнюю точку с учетом длины последнего отрезка и округлённого поворота последней точки
+            //для того чтобы угол был либо 90 либо 45
+            val calcPoints = calcLastPoint(listPoints,tan,dest)
 
-//            Log.d("log"," [${pos.get(0)} ; ${pos.get(1)}] cos ${tan.get(0)} sin ${tan.get(1)}")
-//            Log.d("log", "____________$dest")
-//            Log.d("log", "lastx(-2) = ${listPoints.get(listPoints.size -2).x} lasty(-2) =  ${listPoints.get(listPoints.size -2).y} ")
-//
-//            Log.d("log", "lastx = ${listPoints.last().x} lasty = ${listPoints.last().y} ")
-
-            var XXX = listPoints.get(listPoints.size-2).x +  dest*roundOffDecimal(tan.get(0))
-            var YYY = listPoints.get(listPoints.size-2).y +  dest*roundOffDecimal(tan.get(1))
-
-                Log.d("log", "XXX = ${XXX} YYY = ${YYY} ")
-                listPoints.last().x = XXX.toInt()
-                listPoints.last().y = YYY.toInt()
+            //Меняем последнюю точку в листе , но не рисуем её покачто
+                listPoints.last().x = calcPoints[0].toInt()
+                listPoints.last().y = calcPoints[1].toInt()
                 listPoints.last().distance = dest
-
-            var h = calcDistance(listPoints.get(0).x,listPoints.get(0).y, motionTouchEventX.toInt(), motionTouchEventY.toInt())
-            Log.d("log" ,"dist = $h")
-            if(circleRadius >= h){
-                Log.d("log","in11111111111111111111111")
-                listPoints.last().x =listPoints.get(0).x
-                listPoints.last().y = listPoints.get(0).y
-                XXX= listPoints.get(0).x.toFloat()
-                YYY = listPoints.get(0).y.toFloat()
-                listPoints.last().distance = calcDistance(listPoints.get(listPoints.size-2).x,listPoints.get(listPoints.size-2).y
-                ,listPoints.last().x,listPoints.last().y)
-                isFigureDone = true
+            //Находим расстояние от последней рассчитаной точки до самой первой точки
+            //и если оно меньше чем радиус нашим кружков, значит мы попали в кружок
+            //и замыкаем чертёж автоматически и фигура заканчивается
+            val h = calcDistance(listPoints[0].x, listPoints[0].y, motionTouchEventX.toInt(), motionTouchEventY.toInt())
+                        if(circleRadius >= h){
+                            listPoints.last().x = listPoints[0].x
+                            listPoints.last().y = listPoints[0].y
+                            calcPoints[0]= listPoints[0].x.toFloat()
+                            calcPoints[1] = listPoints[0].y.toFloat()
+                            //Пересчитываю последнюю длину с учетом изменений
+                            listPoints.last().distance = calcDistance(listPoints.get(listPoints.size-2).x,listPoints.get(listPoints.size-2).y
+                            ,listPoints.last().x,listPoints.last().y)
+                            isFigureDone = true
+                     }
+            //меняем последнюю точку пути в path на нашу расчитуннню
+            path.setLastPoint(calcPoints[0],calcPoints[1])
             }
-
-
-            path.setLastPoint(XXX,YYY)
-            }
-
+        //наносим на канву наш изменённый путь
+        extraCanvas.drawPath(path, paint)
+        //наносим кружки на наш путь
         listPoints.forEach{
             extraCanvas.drawCircle( it.x.toFloat(), it.y.toFloat(),circleRadius,paint)
         }
 
-        extraCanvas.drawPath(path, paint)
+
 
         path.reset()
         invalidate()
@@ -148,6 +141,12 @@ class MyCanvasView(context: Context): View(context) {
 
 
 
+    }
+    fun calcLastPoint(listPoints: List<MyPoint>, tan: FloatArray, dest: Float): FloatArray {
+        val calPoints = FloatArray(2)
+        calPoints[0] = listPoints[listPoints.size-2].x +  dest*roundOffDecimal(tan[0])
+        calPoints[1]  = listPoints[listPoints.size-2].y +  dest*roundOffDecimal(tan[1])
+        return calPoints
     }
     fun roundOffDecimal(number: Float): Float {
         val df = DecimalFormat("#")
