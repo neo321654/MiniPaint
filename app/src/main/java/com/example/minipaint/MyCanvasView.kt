@@ -97,11 +97,14 @@ class MyCanvasView(context: Context): View(context) {
             //Рассчитываем последнюю точку с учетом длины последнего отрезка и округлённого поворота последней точки
             //для того чтобы угол был либо 90 либо 45
             val calcPoints = calcLastPoint(listPoints,tan,dest)
-
             //Меняем последнюю точку в листе , но не рисуем её покачто
                 listPoints.last().x = calcPoints[0].toInt()
                 listPoints.last().y = calcPoints[1].toInt()
                 listPoints.last().distance = dest
+                listPoints.last().mCos = calcPoints[2]
+                listPoints.last().mSin = calcPoints[3]
+                listPoints.last().middleX = calcPoints[4].toInt()
+                listPoints.last().middleY = calcPoints[5].toInt()
             //Находим расстояние от последней рассчитаной точки до самой первой точки
             //и если оно меньше чем радиус нашим кружков, значит мы попали в кружок
             //и замыкаем чертёж автоматически и фигура заканчивается
@@ -124,9 +127,8 @@ class MyCanvasView(context: Context): View(context) {
         //наносим кружки на наш путь
         listPoints.forEach{
             extraCanvas.drawCircle( it.x.toFloat(), it.y.toFloat(),circleRadius,paint)
+            extraCanvas.drawCircle( it.middleX.toFloat(), it.middleY.toFloat(),circleRadius,paint)
         }
-
-
 
         path.reset()
         invalidate()
@@ -143,9 +145,16 @@ class MyCanvasView(context: Context): View(context) {
 
     }
     fun calcLastPoint(listPoints: List<MyPoint>, tan: FloatArray, dest: Float): FloatArray {
-        val calPoints = FloatArray(2)
-        calPoints[0] = listPoints[listPoints.size-2].x +  dest*roundOffDecimal(tan[0])
-        calPoints[1]  = listPoints[listPoints.size-2].y +  dest*roundOffDecimal(tan[1])
+        val calPoints = FloatArray(6)
+        calPoints[2]  =  roundOffDecimal(tan[0])
+        calPoints[3]  =  roundOffDecimal(tan[1])
+
+        calPoints[0] = listPoints[listPoints.size-2].x +  dest*calPoints[2]
+        calPoints[1]  = listPoints[listPoints.size-2].y +  dest*calPoints[3]
+
+        calPoints[4] = listPoints[listPoints.size-2].x +  (dest/2)*calPoints[2]
+        calPoints[5] = listPoints[listPoints.size-2].y +  (dest/2)*calPoints[3]
+
         return calPoints
     }
     fun roundOffDecimal(number: Float): Float {
@@ -202,4 +211,4 @@ class MyCanvasView(context: Context): View(context) {
     }
 }
 
-class MyPoint(var x: Int, var y: Int, var distance:Float = 0f, var mCos: Float =0f, var mSin: Float = 0f, var meddleX:Int = 0, var middleY: Int = 0)
+class MyPoint(var x: Int, var y: Int, var distance:Float = 0f, var mCos: Float =0f, var mSin: Float = 0f, var middleX:Int = 0, var middleY: Int = 0)
