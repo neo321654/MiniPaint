@@ -33,6 +33,8 @@ class MyCanvasView(context: Context): View(context) {
     private var currentX = 0f
     private var currentY = 0f
     private val touchTolerance = ViewConfiguration.get(context).scaledTouchSlop
+    private var listPoints :MutableList<MyPoint> = mutableListOf()
+    private var isFirstTouch =true
 
     private val paint = Paint().apply{
         color = drawColor
@@ -52,81 +54,63 @@ class MyCanvasView(context: Context): View(context) {
 
         when(event.action){
             MotionEvent.ACTION_DOWN -> touchDown()
+        //здесь потом добавим обработку перетягивания точки
         //    MotionEvent.ACTION_MOVE -> touchMove()
             MotionEvent.ACTION_UP -> touchUp()
         }
         return true
     }
 
-    private var listPoints :MutableList<MyPoint> = mutableListOf()
-    private var isFirstTouch =true
-
     private fun touchDown() {
         if(listPoints.isEmpty()){
-            Log.d("log","in isEmpty")
+         //   Добавляем первую точку если начало чертежа
             listPoints.add(MyPoint(motionTouchEventX.toInt(),motionTouchEventY.toInt()))
         }
-        path.moveTo(listPoints.get(0).x.toFloat(), listPoints.get(0).y.toFloat())
-
-    }
-    private fun calcDistance(x1: Int,y1: Int,x2:Int,y2:Int): Float {
-        var corx: Double = (x2-x1).toDouble()
-        var cory: Double = (y2-y1).toDouble()
-        return (Math.sqrt(corx.pow(2) + cory.pow(2))).toFloat()
-
+        //    Опускаемся на начальную точку чертежа
+        path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
     }
     private fun touchUp() {
-
+        //если не начало и не конец чертежа добавляем точку в список
         if(!isFirstTouch && !isFigureDone) {
                 listPoints.add(MyPoint(motionTouchEventX.toInt(),motionTouchEventY.toInt()))
         }
-
+        //Заливаем канву цветом
         extraCanvas.drawColor(backgroundColor)
-
+        //Рисуем весь путь с изветными точками
         listPoints.forEach{
             path.lineTo(
                     it.x.toFloat(), it.y.toFloat()
             )
         }
-
-
-
+        //Здесь меняем цвет пути рандомно , чтобы понимать отклонения от пути и как работает перерисовка
         val rnd =  Random()
         val color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
         paint.color = color
-
+        //Снимаем показатели уже построенного пути и узнаём показатели последней точки для анализа дальнейшей
         val pMeasure = PathMeasure(path,false)
-
-
         var pMeasureLenght = pMeasure.length
         var pos = FloatArray(2)
         var tan = FloatArray(2)
         pMeasure.getPosTan(pMeasureLenght, pos, tan)
 
-        var lastDistOrZero = 0f
-
-          listPoints.last().distance = lastDistOrZero
-
+        // Если не начало и не конец чертежа
         if(!isFirstTouch && !isFigureDone ) {
             val dest = calcDistance(listPoints.last().x,listPoints.last().y ,
                     (listPoints.get(listPoints.size-2)).x,(listPoints.get(listPoints.size-2).y))
 
-            Log.d("log"," [${pos.get(0)} ; ${pos.get(1)}] cos ${tan.get(0)} sin ${tan.get(1)}")
-            Log.d("log", "____________$dest")
-            Log.d("log", "lastx(-2) = ${listPoints.get(listPoints.size -2).x} lasty(-2) =  ${listPoints.get(listPoints.size -2).y} ")
-
-            Log.d("log", "lastx = ${listPoints.last().x} lasty = ${listPoints.last().y} ")
+//            Log.d("log"," [${pos.get(0)} ; ${pos.get(1)}] cos ${tan.get(0)} sin ${tan.get(1)}")
+//            Log.d("log", "____________$dest")
+//            Log.d("log", "lastx(-2) = ${listPoints.get(listPoints.size -2).x} lasty(-2) =  ${listPoints.get(listPoints.size -2).y} ")
+//
+//            Log.d("log", "lastx = ${listPoints.last().x} lasty = ${listPoints.last().y} ")
 
             var XXX = listPoints.get(listPoints.size-2).x +  dest*roundOffDecimal(tan.get(0))
             var YYY = listPoints.get(listPoints.size-2).y +  dest*roundOffDecimal(tan.get(1))
 
-
-
                 Log.d("log", "XXX = ${XXX} YYY = ${YYY} ")
                 listPoints.last().x = XXX.toInt()
                 listPoints.last().y = YYY.toInt()
-
-
+                listPoints.last().distance = dest
 
             var h = calcDistance(listPoints.get(0).x,listPoints.get(0).y, motionTouchEventX.toInt(), motionTouchEventY.toInt())
             Log.d("log" ,"dist = $h")
@@ -136,6 +120,8 @@ class MyCanvasView(context: Context): View(context) {
                 listPoints.last().y = listPoints.get(0).y
                 XXX= listPoints.get(0).x.toFloat()
                 YYY = listPoints.get(0).y.toFloat()
+                listPoints.last().distance = calcDistance(listPoints.get(listPoints.size-2).x,listPoints.get(listPoints.size-2).y
+                ,listPoints.last().x,listPoints.last().y)
                 isFigureDone = true
             }
 
@@ -148,7 +134,6 @@ class MyCanvasView(context: Context): View(context) {
         }
 
         extraCanvas.drawPath(path, paint)
-
 
         path.reset()
         invalidate()
@@ -209,6 +194,13 @@ class MyCanvasView(context: Context): View(context) {
 
         invalidate()
     }
+
+    private fun calcDistance(x1: Int,y1: Int,x2:Int,y2:Int): Float {
+        var corx: Double = (x2-x1).toDouble()
+        var cory: Double = (y2-y1).toDouble()
+        return (Math.sqrt(corx.pow(2) + cory.pow(2))).toFloat()
+
+    }
 }
 
-class MyPoint(var x: Int, var y: Int, var distance:Float = 0f)
+class MyPoint(var x: Int, var y: Int, var distance:Float = 0f, var mCos: Float =0f, var mSin: Float = 0f, var meddleX:Int = 0, var middleY: Int = 0)
