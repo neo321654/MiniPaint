@@ -243,8 +243,10 @@ class MyCanvasView(context: Context, supportFragmentManager: FragmentManager): V
 
 
     override fun onDialogPositiveClick(lenght: String) {
-
+        listPoints.last().x = lenght.toInt()
+        listPoints.last().y = lenght.toInt()
         Toast.makeText(context,lenght,Toast.LENGTH_LONG).show()
+        touchUp()
     }
 
     override fun onDialogNegativeClick(dialog: DialogFragment) {
