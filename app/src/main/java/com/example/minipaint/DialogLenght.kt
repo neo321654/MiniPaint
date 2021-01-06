@@ -3,10 +3,8 @@ package com.example.minipaint
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.View
-import android.view.Window
 import androidx.fragment.app.DialogFragment
 import java.lang.ClassCastException
 import java.lang.IllegalStateException
@@ -26,14 +24,18 @@ class DialogLenght : DialogFragment()  {
                         listener.onDialogNegativeClick(this)
                     }
 
+
             builder.create()
         }?: throw IllegalStateException("Activity can't be null")
 
+        //    myCanvasView.systemUiVisibility = SYSTEM_UI_FLAG_FULLSCREEN
+
+
         return dialog
     }
-
     override fun onAttach(activity: Activity) {
         super.onAttach(activity)
+
         try{
             listener = context as DialogLenghtListener
         }catch (e: ClassCastException){

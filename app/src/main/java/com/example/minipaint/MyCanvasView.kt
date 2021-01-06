@@ -7,9 +7,9 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.Window
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
-import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import java.math.RoundingMode
 import java.text.DecimalFormat
@@ -20,7 +20,8 @@ import kotlin.math.pow
 private const val STROKE_WIDTH = 12f
 
 
-class MyCanvasView(context: Context, supportFragmentManager: FragmentManager): View(context) {
+class MyCanvasView(context: Context, supportFragmentManager: FragmentManager, window: Window): View(context) {
+    private val window = window
     private val circleRadius = 30f
     private val supportFragmentManager = supportFragmentManager
     private var isFigureDone = false
@@ -206,6 +207,27 @@ class MyCanvasView(context: Context, supportFragmentManager: FragmentManager): V
         super.onDraw(canvas)
         canvas.drawBitmap(extraBitmap, 0f, 0f, null)
 
+    }
+
+//    override fun onWindowSystemUiVisibilityChanged(visible: Int) {
+//        super.onWindowSystemUiVisibilityChanged(visible)
+//        //Toast.makeText(context,"che",Toast.LENGTH_LONG).show()
+//        hideSystemUI()
+//    }
+
+    private fun hideSystemUI() {
+        // Enables regular immersive mode.
+        // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
+        // Or for "sticky immersive," replace it with SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
+                // Set the content to appear under the system bars so that the
+                // content doesn't resize when the system bars hide and show.
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                // Hide the nav bar and status bar
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN)
     }
 
     private fun touchMove() {
