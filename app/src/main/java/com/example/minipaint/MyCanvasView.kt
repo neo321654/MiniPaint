@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.transform
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.util.*
@@ -61,7 +62,7 @@ class MyCanvasView(context: Context): View(context) {
     private fun touchDown() {
         if(listPoints.isEmpty()){
          //   Добавляем первую точку если начало чертежа
-            listPoints.add(MyPoint(motionTouchEventX.toInt(),motionTouchEventY.toInt()))
+            listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt()))
         }
         //    Опускаемся на начальную точку чертежа
         path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
@@ -69,7 +70,7 @@ class MyCanvasView(context: Context): View(context) {
     private fun touchUp() {
         //если не начало и не конец чертежа добавляем точку в список
         if(!isFirstTouch && !isFigureDone) {
-                listPoints.add(MyPoint(motionTouchEventX.toInt(),motionTouchEventY.toInt()))
+                listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt()))
         }
         //Заливаем канву цветом
         extraCanvas.drawColor(backgroundColor)
@@ -84,7 +85,7 @@ class MyCanvasView(context: Context): View(context) {
         val color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
         paint.color = color
         //Снимаем показатели уже построенного пути и узнаём показатели последней точки для анализа дальнейшей
-        val pMeasure = PathMeasure(path,false)
+        val pMeasure = PathMeasure(path, false)
         var pMeasureLenght = pMeasure.length
         var pos = FloatArray(2)
         var tan = FloatArray(2)
@@ -92,11 +93,11 @@ class MyCanvasView(context: Context): View(context) {
         // Если не начало и не конец чертежа
         if(!isFirstTouch && !isFigureDone ) {
             //Забираем длину последнего отрезка
-            val dest = calcDistance(listPoints.last().x,listPoints.last().y ,
-                    (listPoints.get(listPoints.size-2)).x,(listPoints.get(listPoints.size-2).y))
+            val dest = calcDistance(listPoints.last().x, listPoints.last().y,
+                    (listPoints.get(listPoints.size - 2)).x, (listPoints.get(listPoints.size - 2).y))
             //Рассчитываем последнюю точку с учетом длины последнего отрезка и округлённого поворота последней точки
             //для того чтобы угол был либо 90 либо 45
-            listPoints = calcLastPoint(listPoints,tan,dest)
+            listPoints = calcLastPoint(listPoints, tan, dest)
             //Меняем последнюю точку в листе , но не рисуем её покачто
             //Находим расстояние от последней рассчитаной точки до самой первой точки
             //и если оно меньше чем радиус нашим кружков, значит мы попали в кружок
@@ -105,11 +106,10 @@ class MyCanvasView(context: Context): View(context) {
                         if(circleRadius >= h){
                             listPoints.last().x = listPoints[0].x
                             listPoints.last().y = listPoints[0].y
-                            listPoints.last().middleX = (listPoints.get(listPoints.size-2).x + listPoints[0].x)/2
-                            listPoints.last().middleY = (listPoints.get(listPoints.size-2).y + listPoints[0].y)/2
+                            listPoints.last().middleX = (listPoints.get(listPoints.size - 2).x + listPoints[0].x)/2
+                            listPoints.last().middleY = (listPoints.get(listPoints.size - 2).y + listPoints[0].y)/2
                             //Пересчитываю последнюю длину с учетом изменений
-                            listPoints.last().distance = calcDistance(listPoints.get(listPoints.size-2).x,listPoints.get(listPoints.size-2).y
-                            ,listPoints.last().x,listPoints.last().y)
+                            listPoints.last().distance = calcDistance(listPoints.get(listPoints.size - 2).x, listPoints.get(listPoints.size - 2).y, listPoints.last().x, listPoints.last().y)
                             isFigureDone = true
                      }
             //меняем последнюю точку пути в path на нашу расчитуннню
@@ -119,12 +119,35 @@ class MyCanvasView(context: Context): View(context) {
         extraCanvas.drawPath(path, paint)
         //наносим кружки на наш путь
         listPoints.forEach{
-            extraCanvas.drawCircle( it.x.toFloat(), it.y.toFloat(),circleRadius,paint)
+            extraCanvas.drawCircle(it.x.toFloat(), it.y.toFloat(), circleRadius, paint)
         }
         //Отрисвовываю средние круги , надо потом заменить на текст размеров
+
+
+      //  p.setColor(ResourcesCompat.getColor(resources, R.color.design_default_color_on_primary, null))
+        var p =  Paint();
+
+        p.setStrokeWidth(4F);
+        p.setStyle(Paint.Style.FILL);
+        p.textSize = 40f
+        p.color = Color.BLACK
+
+        var path2 = Path()
+        var widthText = 0f;
+
+       // var rectf = RectF(150F, 100F, 400F, 150F)
+        var distAll = 0f
         listPoints.forEach{
-            if(it.middleX != 0 && it.middleY!=0)
-           extraCanvas.drawCircle( it.middleX.toFloat(), it.middleY.toFloat(),circleRadius,paint)
+            //проверяю что это не первая точка
+            if(it.middleX != 0 && it.middleY!=0){
+                distAll+=it.distance
+                  path2.moveTo((2*it.middleX-it.x).toFloat(), (2*it.middleY-it.y).toFloat())
+                path2.lineTo(it.x.toFloat(), it.y.toFloat())
+                 widthText = p.measureText((it.distance.toInt()).toString());
+                extraCanvas.drawTextOnPath((it.distance.toInt()).toString(),path2, (it.distance.toInt() -widthText)/2, -10F,p)
+                path2.reset()
+            }
+
         }
 
         path.reset()
@@ -145,12 +168,12 @@ class MyCanvasView(context: Context): View(context) {
         listPoints.last().mCos = roundOffDecimal(tan[0])
         listPoints.last().mSin = roundOffDecimal(tan[1])
 
-        listPoints.last().x = (listPoints[listPoints.size-2].x +  dest*listPoints.last().mCos).toInt()
-        listPoints.last().y = (listPoints[listPoints.size-2].y +  dest*listPoints.last().mSin).toInt()
+        listPoints.last().x = (listPoints[listPoints.size - 2].x +  dest*listPoints.last().mCos).toInt()
+        listPoints.last().y = (listPoints[listPoints.size - 2].y +  dest*listPoints.last().mSin).toInt()
         listPoints.last().distance = dest
 
-        listPoints.last().middleX = (listPoints[listPoints.size-2].x +  (dest/2)*listPoints.last().mCos).toInt()
-        listPoints.last().middleY = (listPoints[listPoints.size-2].y +  (dest/2)*listPoints.last().mSin).toInt()
+        listPoints.last().middleX = (listPoints[listPoints.size - 2].x +  (dest/2)*listPoints.last().mCos).toInt()
+        listPoints.last().middleY = (listPoints[listPoints.size - 2].y +  (dest/2)*listPoints.last().mSin).toInt()
 
         return listPoints
     }
@@ -188,7 +211,7 @@ class MyCanvasView(context: Context): View(context) {
 //            ,(motionTouchEventY +currentY)/2)
 
             path.lineTo(
-                (motionTouchEventX + currentX) / 2, (motionTouchEventY + currentY) / 2
+                    (motionTouchEventX + currentX) / 2, (motionTouchEventY + currentY) / 2
             )
 
             currentX = motionTouchEventX
@@ -200,7 +223,7 @@ class MyCanvasView(context: Context): View(context) {
         invalidate()
     }
 
-    private fun calcDistance(x1: Int,y1: Int,x2:Int,y2:Int): Float {
+    private fun calcDistance(x1: Int, y1: Int, x2: Int, y2: Int): Float {
         var corx: Double = (x2-x1).toDouble()
         var cory: Double = (y2-y1).toDouble()
         return (Math.sqrt(corx.pow(2) + cory.pow(2))).toFloat()
@@ -208,4 +231,4 @@ class MyCanvasView(context: Context): View(context) {
     }
 }
 
-class MyPoint(var x: Int, var y: Int, var distance:Float = 0f, var mCos: Float =0f, var mSin: Float = 0f, var middleX:Int = 0, var middleY: Int = 0)
+class MyPoint(var x: Int, var y: Int, var distance: Float = 0f, var mCos: Float = 0f, var mSin: Float = 0f, var middleX: Int = 0, var middleY: Int = 0)
