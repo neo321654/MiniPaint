@@ -1,13 +1,19 @@
 package com.example.minipaint
 
+import android.app.AlertDialog
 import android.content.Context
+import android.content.DialogInterface
 import android.graphics.*
+import android.system.Os.accept
 import android.util.Log
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.transform
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.util.*
@@ -52,6 +58,7 @@ class MyCanvasView(context: Context): View(context) {
 
         when(event.action){
             MotionEvent.ACTION_DOWN -> touchDown()
+            MotionEvent.ACTION_DOWN -> touchDown()
         //здесь потом добавим обработку перетягивания точки
         //    MotionEvent.ACTION_MOVE -> touchMove()
             MotionEvent.ACTION_UP -> touchUp()
@@ -60,6 +67,32 @@ class MyCanvasView(context: Context): View(context) {
     }
 
     private fun touchDown() {
+        //обрабоатываю нажатие если фигура законцена
+        if(isFigureDone){
+            val alertDialog: AlertDialog? = context?.let {
+                val builder = AlertDialog.Builder(it)
+                builder.apply {
+                    setPositiveButton(R.string.app_name,
+                            DialogInterface.OnClickListener { dialog, id ->
+                                // User clicked OK button
+                            })
+                    setNegativeButton(R.string.app_name,
+                            DialogInterface.OnClickListener { dialog, id ->
+                                // User cancelled the dialog
+                            })
+                }  // Set other dialog properties
+
+
+                // Create the AlertDialog
+                builder.create()
+            }
+            if (alertDialog != null) {
+                alertDialog.show()
+            }
+           // Toast.makeText(context, "Long click detected", Toast.LENGTH_SHORT).show()
+        }
+
+
         if(listPoints.isEmpty()){
          //   Добавляем первую точку если начало чертежа
             listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt()))
@@ -134,17 +167,16 @@ class MyCanvasView(context: Context): View(context) {
 
         var path2 = Path()
         var widthText = 0f;
+        var distStr = ""
 
-       // var rectf = RectF(150F, 100F, 400F, 150F)
-        var distAll = 0f
         listPoints.forEach{
             //проверяю что это не первая точка
             if(it.middleX != 0 && it.middleY!=0){
-                distAll+=it.distance
-                  path2.moveTo((2*it.middleX-it.x).toFloat(), (2*it.middleY-it.y).toFloat())
+                distStr =(it.distance.toInt()).toString()
+                path2.moveTo((2*it.middleX-it.x).toFloat(), (2*it.middleY-it.y).toFloat())
                 path2.lineTo(it.x.toFloat(), it.y.toFloat())
-                 widthText = p.measureText((it.distance.toInt()).toString());
-                extraCanvas.drawTextOnPath((it.distance.toInt()).toString(),path2, (it.distance.toInt() -widthText)/2, -10F,p)
+                 widthText = p.measureText(distStr);
+                extraCanvas.drawTextOnPath(distStr,path2, (it.distance.toInt() -widthText)/2, -10F,p)
                 path2.reset()
             }
 
@@ -221,8 +253,8 @@ class MyCanvasView(context: Context): View(context) {
         }
 
         invalidate()
-    }
 
+    }
     private fun calcDistance(x1: Int, y1: Int, x2: Int, y2: Int): Float {
         var corx: Double = (x2-x1).toDouble()
         var cory: Double = (y2-y1).toDouble()
