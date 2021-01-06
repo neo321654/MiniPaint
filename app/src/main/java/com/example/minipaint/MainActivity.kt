@@ -3,16 +3,17 @@ package com.example.minipaint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 
-class MainActivity : AppCompatActivity() ,DialogLenght.DialogLenghtListener{
+class MainActivity : AppCompatActivity() {
     private lateinit var myCanvasView: MyCanvasView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        myCanvasView = MyCanvasView(this, supportFragmentManager,window)
+        myCanvasView = MyCanvasView(this, supportFragmentManager)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             window.setDecorFitsSystemWindows(false)
         }
@@ -21,38 +22,24 @@ class MainActivity : AppCompatActivity() ,DialogLenght.DialogLenghtListener{
         window.decorView.setOnSystemUiVisibilityChangeListener {
             hideSystemUI()
         }
-        myCanvasView.contentDescription = getString(R.string.canvasContentDescription)
-        myCanvasView.setOnLongClickListener {
-
-            Toast.makeText(this, "Long click detected", Toast.LENGTH_SHORT).show()
-            return@setOnLongClickListener true
-        }
         setContentView(myCanvasView)
     }
 
-    //    override fun onResume() {
-//        super.onResume()
-//
-//        hideSystemUI()
-//    }
-//
-//    override fun onRestart() {
-//        super.onRestart()
-//        hideSystemUI()
-//    }
+
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
          hideSystemUI()
     }
-
-    override fun onDialogPositiveClick(dialog: DialogFragment) {
-        Toast.makeText(this,dialog.id.toString(),Toast.LENGTH_LONG).show()
-    }
-
-    override fun onDialogNegativeClick(dialog: DialogFragment) {
-        Toast.makeText(this,dialog.id.toString(),Toast.LENGTH_LONG).show()
-    }
+//
+//    override fun onDialogPositiveClick(lenght: String) {
+//
+//        Toast.makeText(this,lenght,Toast.LENGTH_LONG).show()
+//    }
+//
+//    override fun onDialogNegativeClick(dialog: DialogFragment) {
+//        Toast.makeText(this,dialog.id.toString(),Toast.LENGTH_LONG).show()
+//    }
     private fun hideSystemUI() {
         // Enables regular immersive mode.
         // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
