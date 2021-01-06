@@ -2,14 +2,16 @@ package com.example.minipaint
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
 import android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
 import android.widget.Toast
+import androidx.fragment.app.DialogFragment
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity() ,DialogLenght.DialogLenghtListener{
+    private lateinit var myCanvasView: MyCanvasView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-       val myCanvasView = MyCanvasView(this)
+        myCanvasView = MyCanvasView(this, supportFragmentManager)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             window.setDecorFitsSystemWindows(false)
         }
@@ -21,5 +23,13 @@ class MainActivity : AppCompatActivity() {
             return@setOnLongClickListener true
         }
         setContentView(myCanvasView)
+    }
+
+    override fun onDialogPositiveClick(dialog: DialogFragment) {
+        Toast.makeText(this,dialog.id.toString(),Toast.LENGTH_LONG).show()
+    }
+
+    override fun onDialogNegativeClick(dialog: DialogFragment) {
+        Toast.makeText(this,dialog.id.toString(),Toast.LENGTH_LONG).show()
     }
 }

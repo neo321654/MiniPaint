@@ -3,4 +3,7 @@
     <string name="canvasContentDescription">Mini Paint is a simple line drawing app.
    Drag your fingers to draw. Rotate the phone to clear.</string>
     <string name="ff">swsw</string>
+    <string name="interLenght">Введите длину</string>
+    <string name="posBut">ГОТОВО</string>
+    <string name="cancel">ОТМЕНА</string>
 </resources>

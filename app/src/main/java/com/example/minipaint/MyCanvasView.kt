@@ -1,19 +1,16 @@
 package com.example.minipaint
 
-import android.app.AlertDialog
+
 import android.content.Context
-import android.content.DialogInterface
 import android.graphics.*
-import android.system.Os.accept
 import android.util.Log
-import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
-import androidx.core.graphics.transform
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.FragmentManager
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.util.*
@@ -23,8 +20,9 @@ import kotlin.math.pow
 private const val STROKE_WIDTH = 12f
 
 
-class MyCanvasView(context: Context): View(context) {
+class MyCanvasView(context: Context, supportFragmentManager: FragmentManager): View(context) {
     private val circleRadius = 30f
+    private val supportFragmentManager = supportFragmentManager
     private var isFigureDone = false
     private val drawColor = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
 
@@ -58,7 +56,6 @@ class MyCanvasView(context: Context): View(context) {
 
         when(event.action){
             MotionEvent.ACTION_DOWN -> touchDown()
-            MotionEvent.ACTION_DOWN -> touchDown()
         //здесь потом добавим обработку перетягивания точки
         //    MotionEvent.ACTION_MOVE -> touchMove()
             MotionEvent.ACTION_UP -> touchUp()
@@ -69,27 +66,9 @@ class MyCanvasView(context: Context): View(context) {
     private fun touchDown() {
         //обрабоатываю нажатие если фигура законцена
         if(isFigureDone){
-            val alertDialog: AlertDialog? = context?.let {
-                val builder = AlertDialog.Builder(it)
-                builder.apply {
-                    setPositiveButton(R.string.app_name,
-                            DialogInterface.OnClickListener { dialog, id ->
-                                // User clicked OK button
-                            })
-                    setNegativeButton(R.string.app_name,
-                            DialogInterface.OnClickListener { dialog, id ->
-                                // User cancelled the dialog
-                            })
-                }  // Set other dialog properties
+            val dialofLenght = DialogLenght()
+            dialofLenght.show(supportFragmentManager, "missiles")
 
-
-                // Create the AlertDialog
-                builder.create()
-            }
-            if (alertDialog != null) {
-                alertDialog.show()
-            }
-           // Toast.makeText(context, "Long click detected", Toast.LENGTH_SHORT).show()
         }
 
 
@@ -261,6 +240,8 @@ class MyCanvasView(context: Context): View(context) {
         return (Math.sqrt(corx.pow(2) + cory.pow(2))).toFloat()
 
     }
+
+
 }
 
 class MyPoint(var x: Int, var y: Int, var distance: Float = 0f, var mCos: Float = 0f, var mSin: Float = 0f, var middleX: Int = 0, var middleY: Int = 0)
