@@ -20,9 +20,8 @@ import kotlin.math.pow
 private const val STROKE_WIDTH = 12f
 
 
-class MyCanvasView(context: Context, supportFragmentManager: FragmentManager): View(context),DialogLenght.DialogLenghtListener{
+class MyCanvasView(context: Context, private val supportFragmentManager: FragmentManager): View(context),DialogLenght.DialogLenghtListener{
     private val circleRadius = 30f
-    private val supportFragmentManager = supportFragmentManager
     private var isFigureDone = false
     private val drawColor = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
 
@@ -64,13 +63,6 @@ class MyCanvasView(context: Context, supportFragmentManager: FragmentManager): V
     }
 
     private fun touchDown() {
-        //обрабоатываю нажатие если фигура законцена
-        if(isFigureDone){
-            val dialofLenght = DialogLenght(this)
-            dialofLenght.show(supportFragmentManager, "missiles")
-        }
-
-
         if(listPoints.isEmpty()){
          //   Добавляем первую точку если начало чертежа
             listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt()))
@@ -78,6 +70,38 @@ class MyCanvasView(context: Context, supportFragmentManager: FragmentManager): V
         //    Опускаемся на начальную точку чертежа
         path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
     }
+
+    private fun editSide(motionTouchEventX: Float, motionTouchEventY:
+    Float,listPointsEdited :MutableList<MyPoint>): MutableList<MyPoint> {
+         //настраиваю кисть для эдита и путь
+        val paintEdit = Paint().apply{
+            color = Color.RED
+            isAntiAlias = true
+            isDither = true
+            style = Paint.Style.STROKE
+            strokeJoin = Paint.Join.ROUND
+            strokeCap = Paint.Cap.ROUND
+            strokeWidth = STROKE_WIDTH
+        }
+        val pathEdit = Path()
+        val circleRadiusEdit = 50
+        for (i in 0 until listPointsEdited.size) {
+            val h = calcDistance(listPointsEdited[i].middleX,listPointsEdited[i].middleY, motionTouchEventX.toInt(), motionTouchEventY.toInt())
+            if(circleRadiusEdit >= h){
+                val xy = calcStartPoint(listPointsEdited[i])
+                pathEdit.moveTo(xy[0],xy[1])
+                pathEdit.lineTo(listPointsEdited[i].x.toFloat(),listPointsEdited[i].y.toFloat())
+                extraCanvas.drawPath(pathEdit,paintEdit)
+                val dialofLenght = DialogLenght(this)
+                dialofLenght.show(supportFragmentManager, "missiles")
+                break
+            }
+        }
+
+
+        return listPointsEdited
+    }
+
     private fun touchUp() {
         //если не начало и не конец чертежа добавляем точку в список
         if(!isFirstTouch && !isFigureDone) {
@@ -92,14 +116,14 @@ class MyCanvasView(context: Context, supportFragmentManager: FragmentManager): V
             )
         }
         //Здесь меняем цвет пути рандомно , чтобы понимать отклонения от пути и как работает перерисовка
-        val rnd =  Random()
-        val color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
-        paint.color = color
+//        val rnd =  Random()
+//        val color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
+//        paint.color = color
         //Снимаем показатели уже построенного пути и узнаём показатели последней точки для анализа дальнейшей
         val pMeasure = PathMeasure(path, false)
-        var pMeasureLenght = pMeasure.length
-        var pos = FloatArray(2)
-        var tan = FloatArray(2)
+        val pMeasureLenght = pMeasure.length
+        val pos = FloatArray(2)
+        val tan = FloatArray(2)
         pMeasure.getPosTan(pMeasureLenght, pos, tan)
         // Если не начало и не конец чертежа
         if(!isFirstTouch && !isFigureDone ) {
@@ -132,11 +156,28 @@ class MyCanvasView(context: Context, supportFragmentManager: FragmentManager): V
         listPoints.forEach{
             extraCanvas.drawCircle(it.x.toFloat(), it.y.toFloat(), circleRadius, paint)
         }
-        //Отрисвовываю средние круги , надо потом заменить на текст размеров
 
+        if(isFigureDone){
+            listPoints = editSide(motionTouchEventX,motionTouchEventY,listPoints)
+        }
+        drawNumberLenght()
 
-      //  p.setColor(ResourcesCompat.getColor(resources, R.color.design_default_color_on_primary, null))
-        var p =  Paint();
+    //сброс пути и перерисовка
+        path.reset()
+        invalidate()
+        //Это не первая точка черчежа
+        isFirstTouch = false
+
+//        var str = StringBuilder()
+//            listPoints.forEach{
+//                str!!.append("[${it.x} , ${it.y} , dist ${it.distance}]")
+//            }
+//        Log.d("Log", str.toString())
+
+    }
+
+    private fun drawNumberLenght() {
+        var p = Paint();
 
         p.setStrokeWidth(4F);
         p.setStyle(Paint.Style.FILL);
@@ -147,33 +188,27 @@ class MyCanvasView(context: Context, supportFragmentManager: FragmentManager): V
         var widthText = 0f;
         var distStr = ""
 
-        listPoints.forEach{
+        listPoints.forEach {
             //проверяю что это не первая точка
-            if(it.middleX != 0 && it.middleY!=0){
-                distStr =(it.distance.toInt()).toString()
-                path2.moveTo((2*it.middleX-it.x).toFloat(), (2*it.middleY-it.y).toFloat())
+            if (it.middleX != 0 && it.middleY != 0) {
+                distStr = (it.distance.toInt()).toString()
+                val xy =calcStartPoint(it)
+                path2.moveTo(xy[0], xy[1])
                 path2.lineTo(it.x.toFloat(), it.y.toFloat())
-                 widthText = p.measureText(distStr);
-                extraCanvas.drawTextOnPath(distStr,path2, (it.distance.toInt() -widthText)/2, -10F,p)
+                widthText = p.measureText(distStr);
+                extraCanvas.drawTextOnPath(distStr, path2, (it.distance.toInt() - widthText) / 2, -10F, p)
                 path2.reset()
             }
-
         }
-
-        path.reset()
-        invalidate()
-
-        isFirstTouch = false
-
-        var str = StringBuilder()
-            listPoints.forEach{
-                str!!.append("[${it.x} , ${it.y} , dist ${it.distance}]")
-            }
-        Log.d("Log", str.toString())
-
-
-
     }
+
+    private fun calcStartPoint(it: MyPoint):FloatArray{
+       var startXY = FloatArray(2)
+        startXY [0] =(2 * it.middleX - it.x).toFloat()
+        startXY [1] =(2 * it.middleY - it.y).toFloat()
+        return startXY
+    }
+
     fun calcLastPoint(listPoints: MutableList<MyPoint>, tan: FloatArray, dest: Float): MutableList<MyPoint> {
         listPoints.last().mCos = roundOffDecimal(tan[0])
         listPoints.last().mSin = roundOffDecimal(tan[1])
