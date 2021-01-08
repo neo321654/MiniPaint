@@ -9,8 +9,10 @@ import androidx.fragment.app.DialogFragment
 import java.lang.ClassCastException
 import java.lang.IllegalStateException
 
-class DialogLenght(myCanvasView: MyCanvasView) : DialogFragment()  {
+class DialogLenght(myCanvasView: MyCanvasView, editedPoint: MyPoint) : DialogFragment()  {
+
     private val myCanvasView = myCanvasView
+    private val editedPoint = editedPoint
     internal lateinit var listener: DialogLenghtListener
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -21,7 +23,8 @@ class DialogLenght(myCanvasView: MyCanvasView) : DialogFragment()  {
                 .setView(inflater.inflate(R.layout.dialog_signin, null))
                 .setMessage(R.string.interLenght)
                     .setPositiveButton(R.string.posBut) { dialog, id ->
-                        listener.onDialogPositiveClick(getDialog()?.findViewById<EditText>(R.id.needLenght)?.text.toString())
+                        listener.onDialogPositiveClick(getDialog()?.findViewById<EditText>(R.id.needLenght)?.text.toString()
+                               , editedPoint.idPoint)
                     }
                     .setNegativeButton(R.string.cancel) {dialog, id ->
                         listener.onDialogNegativeClick(this)
@@ -42,7 +45,7 @@ class DialogLenght(myCanvasView: MyCanvasView) : DialogFragment()  {
     }
 
     interface DialogLenghtListener {
-        fun onDialogPositiveClick(dialog: String)
+        fun onDialogPositiveClick(dialog: String, idPoint: Int)
         fun onDialogNegativeClick(dialog: DialogFragment)
     }
 }

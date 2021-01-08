@@ -3,7 +3,6 @@ package com.example.minipaint
 
 import android.content.Context
 import android.graphics.*
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -13,7 +12,6 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import java.math.RoundingMode
 import java.text.DecimalFormat
-import java.util.*
 import kotlin.math.pow
 
 
@@ -23,6 +21,8 @@ private const val STROKE_WIDTH = 12f
 class MyCanvasView(context: Context, private val supportFragmentManager: FragmentManager): View(context),DialogLenght.DialogLenghtListener{
     private val circleRadius = 30f
     private var isFigureDone = false
+    private var counterPointId = 0
+
     private val drawColor = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
 
     private lateinit var extraCanvas: Canvas
@@ -67,12 +67,13 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
          //   Добавляем первую точку если начало чертежа
             listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt()))
         }
+
         //    Опускаемся на начальную точку чертежа
         path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
     }
 
     private fun editSide(motionTouchEventX: Float, motionTouchEventY:
-    Float,listPointsEdited :MutableList<MyPoint>): MutableList<MyPoint> {
+    Float,listPointsEdited :MutableList<MyPoint>){
          //настраиваю кисть для эдита и путь
         val paintEdit = Paint().apply{
             color = Color.RED
@@ -92,20 +93,19 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 pathEdit.moveTo(xy[0],xy[1])
                 pathEdit.lineTo(listPointsEdited[i].x.toFloat(),listPointsEdited[i].y.toFloat())
                 extraCanvas.drawPath(pathEdit,paintEdit)
-                val dialofLenght = DialogLenght(this)
+                //показываю диалог для ввода ширины
+                val dialofLenght = DialogLenght(this,listPointsEdited[i])
                 dialofLenght.show(supportFragmentManager, "missiles")
                 break
             }
         }
-
-
-        return listPointsEdited
     }
 
     private fun touchUp() {
         //если не начало и не конец чертежа добавляем точку в список
         if(!isFirstTouch && !isFigureDone) {
-                listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt()))
+                counterPointId++
+                listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt(),counterPointId))
         }
         //Заливаем канву цветом
         extraCanvas.drawColor(backgroundColor)
@@ -158,7 +158,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
 
         if(isFigureDone){
-            listPoints = editSide(motionTouchEventX,motionTouchEventY,listPoints)
+            editSide(motionTouchEventX,motionTouchEventY,listPoints)
         }
         drawNumberLenght()
 
@@ -277,11 +277,21 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
 
-    override fun onDialogPositiveClick(lenght: String) {
-        listPoints.last().x = lenght.toInt()
-        listPoints.last().y = lenght.toInt()
-        Toast.makeText(context,lenght,Toast.LENGTH_LONG).show()
-        touchUp()
+    override fun onDialogPositiveClick(lenght: String, idPoint: Int) {
+        listPoints = recalculatePoints(lenght,idPoint)
+    }
+
+    private fun recalculatePoints(lenght: String, idPoint: Int): MutableList<MyPoint> {
+            var newListPoint = mutableListOf<MyPoint>()
+        for(i in 0 until listPoints.size) {
+            if(listPoints[i].idPoint == idPoint){
+                var startXY = calcStartPoint(listPoints[i])
+//                listPoints = calcLastPoint(listPoints, tan, dest)
+                listPoints[i].distance = lenght.toFloat()
+            }
+            newListPoint.add(listPoints[i])
+        }
+            return newListPoint
     }
 
     override fun onDialogNegativeClick(dialog: DialogFragment) {
@@ -291,4 +301,5 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
 }
 
-class MyPoint(var x: Int, var y: Int, var distance: Float = 0f, var mCos: Float = 0f, var mSin: Float = 0f, var middleX: Int = 0, var middleY: Int = 0)
+class MyPoint(var x: Int, var y: Int,var idPoint: Int = 0,var distance: Float = 0f,
+    var mCos: Float = 0f, var mSin: Float = 0f, var middleX: Int = 0, var middleY: Int = 0)
