@@ -3,6 +3,7 @@ package com.example.minipaint
 
 import android.content.Context
 import android.graphics.*
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -282,15 +283,40 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     private fun recalculatePoints(lenght: String, idPoint: Int): MutableList<MyPoint> {
-            var newListPoint = mutableListOf<MyPoint>()
+        val newListPoint = mutableListOf<MyPoint>()
+        var previousPoint:MyPoint = listPoints[0]
         for(i in 0 until listPoints.size) {
+
             if(listPoints[i].idPoint == idPoint){
                 var startXY = calcStartPoint(listPoints[i])
 //                listPoints = calcLastPoint(listPoints, tan, dest)
-                listPoints[i].distance = lenght.toFloat()
+         //       listPoints.last().x = (listPoints[listPoints.size - 2].x +  dest*listPoints.last().mCos).toInt()
+              //  Toast.makeText(context,listPoints[i].distance.toString(),Toast.LENGTH_LONG).show()
+                Log.d("log", "${listPoints[i].x } ; ${listPoints[i].y }")
+                previousPoint = listPoints[i]
+                newListPoint.add(listPoints[i])
+                newListPoint.last().x = (listPoints[i-1].x + lenght.toInt()*(listPoints[i].mCos)).toInt()
+                newListPoint.last().y = (listPoints[i-1].y + lenght.toInt()*(listPoints[i].mSin)).toInt()
+                newListPoint.last().distance = lenght.toFloat()
+                newListPoint.last().middleX = (newListPoint.last().x + (listPoints[i-1].x))/2
+                newListPoint.last().middleY = (newListPoint.last().y + (listPoints[i-1].y))/2
+
+                Log.d("log", "${ newListPoint.last().x} ; ${newListPoint.last().y}")
+            }else{
+
+                newListPoint.add(listPoints[i])
+                newListPoint.last().middleX = (newListPoint.last().x + (previousPoint.x))/2
+                newListPoint.last().middleY = (newListPoint.last().y + (previousPoint.y))/2
+                newListPoint.last().distance = calcDistance(newListPoint.last().x,newListPoint.last().y
+                ,previousPoint.x ,previousPoint.y)
+
+                previousPoint = listPoints[i]
+
             }
-            newListPoint.add(listPoints[i])
+
+
         }
+
             return newListPoint
     }
 
