@@ -320,10 +320,12 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         val arrY = mutableListOf<Int>()
         var numPoints = listPoints.size-1
         var square = 0f
+        var perimeter = 0f
 
         listPoints.forEach{
             arrY.add(it.x)
             arrX.add(it.y)
+           perimeter+=it.distance
         }
 //        Log.d("log",arrX.toString())
 //        Log.d("log",arrY.toString())
@@ -341,15 +343,16 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
         square /= 2
        val sq1 = roundOffDecimal((square/10000), "#.#")
-       val sq2 = roundOffDecimal((square), "#")
+        val perRounded =roundOffDecimal((perimeter/100),"#.#")
+       val sq2 = square
         val p = Paint();
 
         p.strokeWidth = 4F;
         p.style = Paint.Style.FILL;
         p.textSize = 40f
         p.color = Color.BLACK
-        extraCanvas.drawText("S = $sq1 ;", 50f, 50f, p)
-        extraCanvas.drawText("S = $sq2 ;", 50f, 150f, p)
+        extraCanvas.drawText("S = $sq1 m\u00b2 ; P = $perRounded m", 50f, 50f, p)
+        extraCanvas.drawText("S= $sq2 pix\u00b2; P= $perimeter pix", 50f, 100f, p)
 
     }
 
