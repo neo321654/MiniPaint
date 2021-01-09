@@ -213,8 +213,9 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     fun calcLastPoint(listPoints: MutableList<MyPoint>, tan: FloatArray, dest: Float): MutableList<MyPoint> {
-        listPoints.last().mCos = roundOffDecimal(tan[0])
-        listPoints.last().mSin = roundOffDecimal(tan[1])
+        listPoints.last().mCos = roundOffDecimal(tan[0], "#")
+
+        listPoints.last().mSin = roundOffDecimal(tan[1],"#")
 
         listPoints.last().x = (listPoints[listPoints.size - 2].x +  dest*listPoints.last().mCos).toInt()
         listPoints.last().y = (listPoints[listPoints.size - 2].y +  dest*listPoints.last().mSin).toInt()
@@ -225,8 +226,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         return listPoints
     }
-    fun roundOffDecimal(number: Float): Float {
-        val df = DecimalFormat("#")
+    fun roundOffDecimal(number: Float, s: String): Float {
+        val df = DecimalFormat(s)
         df.roundingMode = RoundingMode.HALF_EVEN
         return df.format(number).toFloat()
     }
@@ -305,8 +306,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 //    alert("Area  = " + a);
 
     private fun drawSquarePerimetr(listPoints: MutableList<MyPoint>) {
-        var arrX = mutableListOf<Int>()
-        var arrY = mutableListOf<Int>()
+        val arrX = mutableListOf<Int>()
+        val arrY = mutableListOf<Int>()
         var numPoints = listPoints.size-1
         var square = 0f
 
@@ -314,8 +315,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             arrY.add(it.x)
             arrX.add(it.y)
         }
-        Log.d("log",arrX.toString())
-        Log.d("log",arrY.toString())
+//        Log.d("log",arrX.toString())
+//        Log.d("log",arrY.toString())
 //        arrX = mutableListOf(4,  4,  8,  8, -4,-4)
 //        arrY = mutableListOf(6, -4, -4, -8, -8, 6)
 //        numPoints = 6-1
@@ -328,14 +329,15 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             square+=(arrX[numPoints]+arrX[i])*(arrY[numPoints]-arrY[i])
             numPoints = i
         }
-        square = square/2
+        square /= 2
         val p = Paint();
 
-        p.setStrokeWidth(4F);
-        p.setStyle(Paint.Style.FILL);
+        p.strokeWidth = 4F;
+        p.style = Paint.Style.FILL;
         p.textSize = 40f
         p.color = Color.BLACK
-        extraCanvas.drawText("S = ${square} ;",50f,50f,p)
+        extraCanvas.drawText("S = ${roundOffDecimal(square/10000,"#.#")} ;",50f,50f,p)
+        extraCanvas.drawText("S = ${roundOffDecimal(square,"##")} ;",50f,150f,p)
 
     }
 
