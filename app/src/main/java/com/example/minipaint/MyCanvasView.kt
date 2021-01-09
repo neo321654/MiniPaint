@@ -401,6 +401,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     override fun onDialogNegativeClick(dialog: DialogFragment) {
+        extraCanvas.scale(0.3f,0.3f, 400f,400f)
         Toast.makeText(context, dialog.id.toString(), Toast.LENGTH_LONG).show()
     }
 
