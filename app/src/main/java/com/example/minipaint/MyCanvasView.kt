@@ -74,7 +74,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     private fun editSide(motionTouchEventX: Float, motionTouchEventY:
-    Float,listPointsEdited :MutableList<MyPoint>){
+    Float, listPointsEdited: MutableList<MyPoint>){
          //настраиваю кисть для эдита и путь
         val paintEdit = Paint().apply{
             color = Color.RED
@@ -88,14 +88,14 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         val pathEdit = Path()
         val circleRadiusEdit = 50
         for (i in 0 until listPointsEdited.size) {
-            val h = calcDistance(listPointsEdited[i].middleX,listPointsEdited[i].middleY, motionTouchEventX.toInt(), motionTouchEventY.toInt())
+            val h = calcDistance(listPointsEdited[i].middleX, listPointsEdited[i].middleY, motionTouchEventX.toInt(), motionTouchEventY.toInt())
             if(circleRadiusEdit >= h){
                 val xy = calcStartPoint(listPointsEdited[i])
-                pathEdit.moveTo(xy[0],xy[1])
-                pathEdit.lineTo(listPointsEdited[i].x.toFloat(),listPointsEdited[i].y.toFloat())
-                extraCanvas.drawPath(pathEdit,paintEdit)
+                pathEdit.moveTo(xy[0], xy[1])
+                pathEdit.lineTo(listPointsEdited[i].x.toFloat(), listPointsEdited[i].y.toFloat())
+                extraCanvas.drawPath(pathEdit, paintEdit)
                 //показываю диалог для ввода ширины
-                val dialofLenght = DialogLenght(this,listPointsEdited[i])
+                val dialofLenght = DialogLenght(this, listPointsEdited[i])
                 dialofLenght.show(supportFragmentManager, "missiles")
                 break
             }
@@ -106,7 +106,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         //если не начало и не конец чертежа добавляем точку в список
         if(!isFirstTouch && !isFigureDone) {
                 counterPointId++
-                listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt(),counterPointId))
+                listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt(), counterPointId))
         }
         //Заливаем канву цветом
         extraCanvas.drawColor(backgroundColor)
@@ -160,7 +160,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         if(isFigureDone){
             drawSquarePerimetr(listPoints)
-            editSide(motionTouchEventX,motionTouchEventY,listPoints)
+            editSide(motionTouchEventX, motionTouchEventY, listPoints)
 
         }
         drawNumberLenght()
@@ -207,15 +207,15 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
     private fun calcStartPoint(it: MyPoint):FloatArray{
        var startXY = FloatArray(2)
-        startXY [0] =(2 * it.middleX - it.x).toFloat()
-        startXY [1] =(2 * it.middleY - it.y).toFloat()
+        startXY[0] =(2 * it.middleX - it.x).toFloat()
+        startXY[1] =(2 * it.middleY - it.y).toFloat()
         return startXY
     }
 
     fun calcLastPoint(listPoints: MutableList<MyPoint>, tan: FloatArray, dest: Float): MutableList<MyPoint> {
-        listPoints.last().mCos = roundOffDecimal(tan[0], "#")
+        listPoints.last().mCos = roundOffDecimal(tan[0], "#").toFloat()
 
-        listPoints.last().mSin = roundOffDecimal(tan[1],"#")
+        listPoints.last().mSin = roundOffDecimal(tan[1], "#").toFloat()
 
         listPoints.last().x = (listPoints[listPoints.size - 2].x +  dest*listPoints.last().mCos).toInt()
         listPoints.last().y = (listPoints[listPoints.size - 2].y +  dest*listPoints.last().mSin).toInt()
@@ -226,10 +226,20 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         return listPoints
     }
-    fun roundOffDecimal(number: Float, s: String): Float {
+    private fun roundOffDecimal(number: Float, s: String): String {
         val df = DecimalFormat(s)
         df.roundingMode = RoundingMode.HALF_EVEN
-        return df.format(number).toFloat()
+
+//        val f: NumberFormat = NumberFormat.getInstance()
+//        if (f is DecimalFormat) {
+//            f.isDecimalSeparatorAlwaysShown = true
+//            f.roundingMode = RoundingMode.HALF_EVEN
+//
+//        }
+
+
+        return df.format(number)
+
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -282,7 +292,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
 
     override fun onDialogPositiveClick(lenght: String, idPoint: Int) {
-        listPoints = recalculatePoints(lenght,idPoint)
+        listPoints = recalculatePoints(lenght, idPoint)
         //метод отрисовки площади и переметра
         drawSquarePerimetr(listPoints)
     }
@@ -330,14 +340,16 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             numPoints = i
         }
         square /= 2
+       val sq1 = roundOffDecimal((square/10000), "#.#")
+       val sq2 = roundOffDecimal((square), "#")
         val p = Paint();
 
         p.strokeWidth = 4F;
         p.style = Paint.Style.FILL;
         p.textSize = 40f
         p.color = Color.BLACK
-        extraCanvas.drawText("S = ${roundOffDecimal(square/10000,"#.#")} ;",50f,50f,p)
-        extraCanvas.drawText("S = ${roundOffDecimal(square,"##")} ;",50f,150f,p)
+        extraCanvas.drawText("S = $sq1 ;", 50f, 50f, p)
+        extraCanvas.drawText("S = $sq2 ;", 50f, 150f, p)
 
     }
 
@@ -351,23 +363,22 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 //                listPoints = calcLastPoint(listPoints, tan, dest)
          //       listPoints.last().x = (listPoints[listPoints.size - 2].x +  dest*listPoints.last().mCos).toInt()
               //  Toast.makeText(context,listPoints[i].distance.toString(),Toast.LENGTH_LONG).show()
-                Log.d("log", "${listPoints[i].x } ; ${listPoints[i].y }")
+                Log.d("log", "${listPoints[i].x} ; ${listPoints[i].y}")
                 previousPoint = listPoints[i]
                 newListPoint.add(listPoints[i])
-                newListPoint.last().x = (listPoints[i-1].x + lenght.toInt()*(listPoints[i].mCos)).toInt()
-                newListPoint.last().y = (listPoints[i-1].y + lenght.toInt()*(listPoints[i].mSin)).toInt()
+                newListPoint.last().x = (listPoints[i - 1].x + lenght.toInt()*(listPoints[i].mCos)).toInt()
+                newListPoint.last().y = (listPoints[i - 1].y + lenght.toInt()*(listPoints[i].mSin)).toInt()
                 newListPoint.last().distance = lenght.toFloat()
-                newListPoint.last().middleX = (newListPoint.last().x + (listPoints[i-1].x))/2
-                newListPoint.last().middleY = (newListPoint.last().y + (listPoints[i-1].y))/2
+                newListPoint.last().middleX = (newListPoint.last().x + (listPoints[i - 1].x))/2
+                newListPoint.last().middleY = (newListPoint.last().y + (listPoints[i - 1].y))/2
 
-                Log.d("log", "${ newListPoint.last().x} ; ${newListPoint.last().y}")
+                Log.d("log", "${newListPoint.last().x} ; ${newListPoint.last().y}")
             }else{
 
                 newListPoint.add(listPoints[i])
                 newListPoint.last().middleX = (newListPoint.last().x + (previousPoint.x))/2
                 newListPoint.last().middleY = (newListPoint.last().y + (previousPoint.y))/2
-                newListPoint.last().distance = calcDistance(newListPoint.last().x,newListPoint.last().y
-                ,previousPoint.x ,previousPoint.y)
+                newListPoint.last().distance = calcDistance(newListPoint.last().x, newListPoint.last().y, previousPoint.x, previousPoint.y)
 
                 previousPoint = listPoints[i]
 
@@ -380,11 +391,11 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     override fun onDialogNegativeClick(dialog: DialogFragment) {
-        Toast.makeText(context,dialog.id.toString(),Toast.LENGTH_LONG).show()
+        Toast.makeText(context, dialog.id.toString(), Toast.LENGTH_LONG).show()
     }
 
 
 }
 
-class MyPoint(var x: Int, var y: Int,var idPoint: Int = 0,var distance: Float = 0f,
-    var mCos: Float = 0f, var mSin: Float = 0f, var middleX: Int = 0, var middleY: Int = 0)
+class MyPoint(var x: Int, var y: Int, var idPoint: Int = 0, var distance: Float = 0f,
+              var mCos: Float = 0f, var mSin: Float = 0f, var middleX: Int = 0, var middleY: Int = 0)
