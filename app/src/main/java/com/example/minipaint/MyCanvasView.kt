@@ -159,7 +159,9 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
 
         if(isFigureDone){
+            drawSquarePerimetr(listPoints)
             editSide(motionTouchEventX,motionTouchEventY,listPoints)
+
         }
         drawNumberLenght()
 
@@ -280,6 +282,61 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
     override fun onDialogPositiveClick(lenght: String, idPoint: Int) {
         listPoints = recalculatePoints(lenght,idPoint)
+        //метод отрисовки площади и переметра
+        drawSquarePerimetr(listPoints)
+    }
+
+
+//    function polygonArea(X, Y, numPoints)
+//    {
+//        area = 0;   // Accumulates area
+//        j = numPoints-1;
+//
+//        for (i=0; i<numPoints; i++)
+//        { area +=  (X[j]+X[i]) * (Y[j]-Y[i]);
+//            j = i;  //j is previous vertex to i
+//        }
+//        return area/2;
+//    }
+
+//    var xPts = [4,  4,  8,  8, -4,-4];
+//    var yPts = [6, -4, -4, -8, -8, 6];
+//    var a = polygonArea(xPts, yPts, 6);
+//    alert("Area  = " + a);
+
+    private fun drawSquarePerimetr(listPoints: MutableList<MyPoint>) {
+        var arrX = mutableListOf<Int>()
+        var arrY = mutableListOf<Int>()
+        var numPoints = listPoints.size-1
+        var square = 0f
+
+        listPoints.forEach{
+            arrY.add(it.x)
+            arrX.add(it.y)
+        }
+        Log.d("log",arrX.toString())
+        Log.d("log",arrY.toString())
+//        arrX = mutableListOf(4,  4,  8,  8, -4,-4)
+//        arrY = mutableListOf(6, -4, -4, -8, -8, 6)
+//        numPoints = 6-1
+//        arrY = mutableListOf(197, 197, 508, 508, 174, 174)
+//        arrX = mutableListOf(1001, 534, 534, 915, 915, 971)
+//        numPoints = 6-1
+
+
+        for(i in 0 .. numPoints){
+            square+=(arrX[numPoints]+arrX[i])*(arrY[numPoints]-arrY[i])
+            numPoints = i
+        }
+        square = square/2
+        val p = Paint();
+
+        p.setStrokeWidth(4F);
+        p.setStyle(Paint.Style.FILL);
+        p.textSize = 40f
+        p.color = Color.BLACK
+        extraCanvas.drawText("S = ${square} ;",50f,50f,p)
+
     }
 
     private fun recalculatePoints(lenght: String, idPoint: Int): MutableList<MyPoint> {
