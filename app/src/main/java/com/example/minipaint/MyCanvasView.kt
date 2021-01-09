@@ -86,10 +86,17 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             strokeWidth = STROKE_WIDTH
         }
         val pathEdit = Path()
+        // для нажатия выберем середину отрезка с таким радиусом
         val circleRadiusEdit = 50
         for (i in 0 until listPointsEdited.size) {
             val h = calcDistance(listPointsEdited[i].middleX, listPointsEdited[i].middleY, motionTouchEventX.toInt(), motionTouchEventY.toInt())
+        //условие при котором мы сравниваем радиус точки касания с нашей серединой отрезка
             if(circleRadiusEdit >= h){
+               //здесь мы каснёмся последнего отрезка и Тостуем
+                if(listPointsEdited[i].idPoint == listPointsEdited.size-1){
+                    Toast.makeText(context,R.string.lastDistance,Toast.LENGTH_LONG).show()
+                    break
+                }
                 val xy = calcStartPoint(listPointsEdited[i])
                 pathEdit.moveTo(xy[0], xy[1])
                 pathEdit.lineTo(listPointsEdited[i].x.toFloat(), listPointsEdited[i].y.toFloat())
