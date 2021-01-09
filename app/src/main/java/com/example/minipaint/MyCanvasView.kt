@@ -401,8 +401,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     override fun onDialogNegativeClick(dialog: DialogFragment) {
+        //надо найти центр фигуры, и вычислить увеличение про прямоугольнику вписанной фигуры
         extraCanvas.scale(0.3f,0.3f, 400f,400f)
-        Toast.makeText(context, dialog.id.toString(), Toast.LENGTH_LONG).show()
     }
 
 
