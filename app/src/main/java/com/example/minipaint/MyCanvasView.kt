@@ -288,7 +288,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         listPoints.forEach {
             //проверяю что это не первая точка
-            if (it.middleX != 0 && it.middleY != 0) {
+            if (it.middleX != 0 && it.middleY != 0 && it.idPoint!=0) {
                 distStr = (it.distance.toInt()).toString()
                 val xy =calcStartPoint(it)
                 path2.moveTo(xy[0], xy[1])
@@ -458,6 +458,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         var previousPoint:MyPoint = listPoints[0]
         for(i in 0 until listPoints.size) {
 
+            //здесь вылетела ошибка вышел за пределы масива
             if(listPoints[i].idPoint == idPoint){
                 var startXY = calcStartPoint(listPoints[i])
 //                listPoints = calcLastPoint(listPoints, tan, dest)
