@@ -192,7 +192,9 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 extraCanvas.drawPath(pathEdit, paintEdit)
                 //показываю диалог для ввода ширины
                 val dialofLenght = DialogLenght(this, listPointsEdited[i])
+
                 dialofLenght.show(supportFragmentManager, "missiles")
+
                 break
             }
         }
