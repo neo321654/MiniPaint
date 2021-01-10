@@ -4,6 +4,7 @@ package com.example.minipaint
 import android.content.Context
 import android.graphics.*
 import android.util.Log
+import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -48,20 +49,105 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         strokeWidth = STROKE_WIDTH
     }
 
+    //поля для увеличения
+//    private val mCurrentViewport = RectF(AXIS_X_MIN, AXIS_Y_MIN, AXIS_X_MAX, AXIS_Y_MAX)
+//    private val mContentRect: Rect? = null
 
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         motionTouchEventX = event.x
         motionTouchEventY = event.y
-
-        when(event.action){
-            MotionEvent.ACTION_DOWN -> touchDown()
-        //здесь потом добавим обработку перетягивания точки
-        //    MotionEvent.ACTION_MOVE -> touchMove()
-            MotionEvent.ACTION_UP -> touchUp()
+//        when(event.action){
+//            MotionEvent.ACTION_DOWN -> touchDown()
+//        //здесь потом добавим обработку перетягивания точки
+//        //    MotionEvent.ACTION_MOVE -> touchMove()
+//            MotionEvent.ACTION_UP -> touchUp()
+//        }
+        //заменил обработчик событий на детектор жестов
+         detector.onTouchEvent(event).let {
+             when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        touchDown()
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        touchUp()
+                        if(isFigureDone)scaleCanvasToEdge()
+                        //сброс пути и перерисовка
+                        path.reset()
+                        invalidate()
+                    }
+                    else -> true
+                }
         }
         return true
     }
+
+    //работаем обработчиком жестов
+    private val myListener = object : GestureDetector.SimpleOnGestureListener(){
+        override fun onLongPress(e: MotionEvent?) {
+            super.onLongPress(e)
+
+            Toast.makeText(context,"h ${extraCanvas.height}; w${extraCanvas.width};",Toast.LENGTH_LONG).show()
+        }
+
+        override fun onDown(e: MotionEvent): Boolean {
+            return true
+        }
+    }
+
+    private fun scaleCanvasToEdge() {
+        //  extraCanvas.scale(0.9F, 0.9F)
+        paint.setColor(Color.CYAN)
+        var pathRect = Path()
+        var pathDest = Path()
+        var rectfBounds = RectF()
+        path.computeBounds(rectfBounds, true);
+        var rectfDest = RectF()
+        var matrix = Matrix()
+
+        //10% on ширины девайса
+        var bounds = (extraCanvas.width*0.1).toFloat()
+        rectfDest.set(bounds, bounds, extraCanvas.width-bounds, extraCanvas.height-bounds)
+
+        matrix.reset()
+        matrix.setRectToRect(rectfBounds, rectfDest, Matrix.ScaleToFit.CENTER);
+        path.transform(matrix, pathDest);
+//        extraCanvas.drawRect(rectfDest, paint)
+//         extraCanvas.drawRect(rectfBounds, paint)
+        paint.setColor(Color.GREEN)
+
+        val arrF = FloatArray(listPoints.size*2)
+       var iter = 0
+        listPoints.forEach{
+            arrF[iter]=it.x.toFloat()
+            iter++
+            arrF[iter]=it.y.toFloat()
+            iter++
+        }
+
+
+        Log.d("log",arrF.joinToString("          ;"))
+        matrix.mapPoints(arrF)
+
+        Log.d("log",arrF.joinToString("          ;"))
+
+
+
+        extraCanvas.drawPath(pathDest, paint)
+
+        iter = 0
+        listPoints.forEach{
+
+            it.x = arrF[iter].toInt()
+            iter++
+            it.y= arrF[iter].toInt()
+            iter++
+        }
+
+
+    }
+
+    private val detector: GestureDetector = GestureDetector(context,myListener)
 
     private fun touchDown() {
         if(listPoints.isEmpty()){
@@ -69,7 +155,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt()))
         }
 
-        //    Опускаемся на начальную точку чертежа
+        //    Опускаем кисть на начальную точку чертежа
         path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
     }
 
@@ -128,6 +214,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 //        val color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
 //        paint.color = color
         //Снимаем показатели уже построенного пути и узнаём показатели последней точки для анализа дальнейшей
+
         val pMeasure = PathMeasure(path, false)
         val pMeasureLenght = pMeasure.length
         val pos = FloatArray(2)
@@ -172,9 +259,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
         drawNumberLenght()
 
-    //сброс пути и перерисовка
-        path.reset()
-        invalidate()
+
         //Это не первая точка черчежа
         isFirstTouch = false
 
@@ -219,7 +304,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         return startXY
     }
 
-    fun calcLastPoint(listPoints: MutableList<MyPoint>, tan: FloatArray, dest: Float): MutableList<MyPoint> {
+    private fun calcLastPoint(listPoints: MutableList<MyPoint>, tan: FloatArray, dest: Float): MutableList<MyPoint> {
         listPoints.last().mCos = roundOffDecimal(tan[0], "#").toFloat()
 
         listPoints.last().mSin = roundOffDecimal(tan[1], "#").toFloat()
@@ -233,6 +318,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         return listPoints
     }
+
     private fun roundOffDecimal(number: Float, s: String): String {
         val df = DecimalFormat(s)
         df.roundingMode = RoundingMode.HALF_EVEN
