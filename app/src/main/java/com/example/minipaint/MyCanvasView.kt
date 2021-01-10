@@ -124,24 +124,28 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             arrF[iter]=it.y.toFloat()
             iter++
         }
-
-
         Log.d("log",arrF.joinToString("          ;"))
         matrix.mapPoints(arrF)
-
         Log.d("log",arrF.joinToString("          ;"))
-
-
-
         extraCanvas.drawPath(pathDest, paint)
 
         iter = 0
+        //меняю ху на преобразованые из матрицы
         listPoints.forEach{
-
             it.x = arrF[iter].toInt()
             iter++
             it.y= arrF[iter].toInt()
             iter++
+        }
+        //     listPoints.last().middleX = (listPoints[listPoints.size - 2].x +  (dest/2)*listPoints.last().mCos).toInt()
+        var lastP = MyPoint(0,0)
+        listPoints.forEach{
+            if(it.idPoint!=0){
+                it.middleX =( lastP.x+it.x)/2
+                it.middleY=( lastP.y+it.y)/2
+                it.distance = calcDistance(lastP.x,lastP.y,it.x,it.y)
+            }
+            lastP = it
         }
 
 
@@ -154,7 +158,6 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
          //   Добавляем первую точку если начало чертежа
             listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt()))
         }
-
         //    Опускаем кисть на начальную точку чертежа
         path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
     }
@@ -214,14 +217,14 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 //        val color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
 //        paint.color = color
         //Снимаем показатели уже построенного пути и узнаём показатели последней точки для анализа дальнейшей
-
+        if(!isFirstTouch && !isFigureDone ) {
         val pMeasure = PathMeasure(path, false)
         val pMeasureLenght = pMeasure.length
         val pos = FloatArray(2)
         val tan = FloatArray(2)
         pMeasure.getPosTan(pMeasureLenght, pos, tan)
         // Если не начало и не конец чертежа
-        if(!isFirstTouch && !isFigureDone ) {
+
             //Забираем длину последнего отрезка
             val dest = calcDistance(listPoints.last().x, listPoints.last().y,
                     (listPoints.get(listPoints.size - 2)).x, (listPoints.get(listPoints.size - 2).y))
@@ -312,6 +315,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         listPoints.last().x = (listPoints[listPoints.size - 2].x +  dest*listPoints.last().mCos).toInt()
         listPoints.last().y = (listPoints[listPoints.size - 2].y +  dest*listPoints.last().mSin).toInt()
         listPoints.last().distance = dest
+
 
         listPoints.last().middleX = (listPoints[listPoints.size - 2].x +  (dest/2)*listPoints.last().mCos).toInt()
         listPoints.last().middleY = (listPoints[listPoints.size - 2].y +  (dest/2)*listPoints.last().mSin).toInt()
