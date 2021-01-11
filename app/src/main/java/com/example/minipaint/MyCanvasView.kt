@@ -1,6 +1,7 @@
 package com.example.minipaint
 
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.util.Log
@@ -14,7 +15,9 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import java.math.RoundingMode
 import java.text.DecimalFormat
+import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.math.sqrt
 
 
 private const val STROKE_WIDTH = 12f
@@ -35,10 +38,12 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     private var motionTouchEventY = 0f
     private var currentX = 0f
     private var currentY = 0f
+    //Это поле было для рисования пальцем
     private val touchTolerance = ViewConfiguration.get(context).scaledTouchSlop
     private var listPoints :MutableList<MyPoint> = mutableListOf()
     private var isFirstTouch =true
 
+    //Настройка кисти для отображения черчежа
     private val paint = Paint().apply{
         color = drawColor
         isAntiAlias = true
@@ -49,118 +54,111 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         strokeWidth = STROKE_WIDTH
     }
 
+    //работаем обработчиком жестов
+    //синглтон для жестов лисенер
+    private val listenerForDetectorGesture = object : GestureDetector.SimpleOnGestureListener(){
+        override fun onLongPress(e: MotionEvent?) {
+            super.onLongPress(e)
+
+            Toast.makeText(context, "h ${extraCanvas.height}; w${extraCanvas.width};", Toast.LENGTH_LONG).show()
+        }
+        //Этот метод необходимо переопределить а то не сработают другие жесты
+        override fun onDown(e: MotionEvent): Boolean {
+            return true
+        }
+    }
+ //   private val detector: GestureDetector = GestureDetector(context,myListener)
+    private val detectorGesture: GestureDetector = GestureDetector(context, listenerForDetectorGesture)
+
     //поля для увеличения
 //    private val mCurrentViewport = RectF(AXIS_X_MIN, AXIS_Y_MIN, AXIS_X_MAX, AXIS_Y_MAX)
 //    private val mContentRect: Rect? = null
 
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         motionTouchEventX = event.x
         motionTouchEventY = event.y
-//        when(event.action){
-//            MotionEvent.ACTION_DOWN -> touchDown()
-//        //здесь потом добавим обработку перетягивания точки
-//        //    MotionEvent.ACTION_MOVE -> touchMove()
-//            MotionEvent.ACTION_UP -> touchUp()
-//        }
         //заменил обработчик событий на детектор жестов
-         detector.onTouchEvent(event).let {
+         detectorGesture.onTouchEvent(event).let {
              when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        touchDown()
-                    }
-                    MotionEvent.ACTION_UP -> {
-                        touchUp()
-                        if(isFigureDone)scaleCanvasToEdge()
-                        //сброс пути и перерисовка
-                        path.reset()
-                        invalidate()
-                    }
+                 MotionEvent.ACTION_DOWN -> {
+                     touchDown()
+                 }
+                 MotionEvent.ACTION_UP -> {
+                     touchUp()
+                     //условие для выполнения увеличения
+                     //if(isFigureDone)scaleCanvasToEdge()
+                     //сброс пути и перерисовка
+                     path.reset()
+                     invalidate()
+                 }
                     else -> true
                 }
         }
         return true
     }
-
-    //работаем обработчиком жестов
-    private val myListener = object : GestureDetector.SimpleOnGestureListener(){
-        override fun onLongPress(e: MotionEvent?) {
-            super.onLongPress(e)
-
-            Toast.makeText(context,"h ${extraCanvas.height}; w${extraCanvas.width};",Toast.LENGTH_LONG).show()
-        }
-
-        override fun onDown(e: MotionEvent): Boolean {
-            return true
-        }
-    }
-
-    private fun scaleCanvasToEdge() {
-        //  extraCanvas.scale(0.9F, 0.9F)
-        paint.setColor(Color.CYAN)
-        var pathRect = Path()
-        var pathDest = Path()
-        var rectfBounds = RectF()
-        path.computeBounds(rectfBounds, true);
-        var rectfDest = RectF()
-        var matrix = Matrix()
-
-        //10% on ширины девайса
-        var bounds = (extraCanvas.width*0.1).toFloat()
-        rectfDest.set(bounds, bounds, extraCanvas.width-bounds, extraCanvas.height-bounds)
-
-        matrix.reset()
-        matrix.setRectToRect(rectfBounds, rectfDest, Matrix.ScaleToFit.CENTER);
-        path.transform(matrix, pathDest);
-//        extraCanvas.drawRect(rectfDest, paint)
-//         extraCanvas.drawRect(rectfBounds, paint)
-        paint.setColor(Color.GREEN)
-
-        val arrF = FloatArray(listPoints.size*2)
-       var iter = 0
-        listPoints.forEach{
-            arrF[iter]=it.x.toFloat()
-            iter++
-            arrF[iter]=it.y.toFloat()
-            iter++
-        }
-        Log.d("log",arrF.joinToString("          ;"))
-        matrix.mapPoints(arrF)
-        Log.d("log",arrF.joinToString("          ;"))
-        extraCanvas.drawPath(pathDest, paint)
-
-        iter = 0
-        //меняю ху на преобразованые из матрицы
-        listPoints.forEach{
-            it.x = arrF[iter].toInt()
-            iter++
-            it.y= arrF[iter].toInt()
-            iter++
-        }
-        //     listPoints.last().middleX = (listPoints[listPoints.size - 2].x +  (dest/2)*listPoints.last().mCos).toInt()
-        var lastP = MyPoint(0,0)
-        listPoints.forEach{
-            if(it.idPoint!=0){
-                it.middleX =( lastP.x+it.x)/2
-                it.middleY=( lastP.y+it.y)/2
-                it.distance = calcDistance(lastP.x,lastP.y,it.x,it.y)
-            }
-            lastP = it
-        }
-
-
-    }
-
-    private val detector: GestureDetector = GestureDetector(context,myListener)
-
     private fun touchDown() {
         if(listPoints.isEmpty()){
-         //   Добавляем первую точку если начало чертежа
+            //   Добавляем первую точку если начало чертежа
             listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt()))
         }
         //    Опускаем кисть на начальную точку чертежа
         path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
     }
+    // Увеличение чертежа до краёв
+//    private fun scaleCanvasToEdge() {
+//        //  extraCanvas.scale(0.9F, 0.9F)
+//        paint.color = Color.CYAN
+//        var pathRect = Path()
+//        val pathDest = Path()
+//        val rectfBounds = RectF()
+//        val rectfDest = RectF()
+//        val matrix = Matrix()
+//        matrix.reset()
+//        //10% on ширины девайса
+//        val bounds = (extraCanvas.width*0.1).toFloat()
+//        //прямоугольник-рамка для вписания
+//        rectfDest.set(bounds, bounds, extraCanvas.width-bounds, extraCanvas.height-bounds)
+//        //вычисление границ чертежа и присвоение этих границ прямоугольнику
+//        path.computeBounds(rectfBounds, true);
+//        //матрица выполняющая вписание одного прямоугольника в другой
+//        matrix.setRectToRect(rectfBounds, rectfDest, Matrix.ScaleToFit.CENTER);
+//        path.transform(matrix, pathDest);
+//        paint.color = Color.GREEN
+//        //здесь находим новые точки с помощью матрицы matrix.mapPoints()
+//       val arrF = FloatArray(listPoints.size*2)
+//       var iter = 0
+//        listPoints.forEach{
+//            arrF[iter]=it.x.toFloat()
+//            iter++
+//            arrF[iter]=it.y.toFloat()
+//            iter++
+//        }
+//        Log.d("log",arrF.joinToString("          ;"))
+//        matrix.mapPoints(arrF)
+//        Log.d("log",arrF.joinToString("          ;"))
+//        extraCanvas.drawPath(pathDest, paint)
+//        iter = 0
+//        //меняю ху на преобразованые из матрицы
+//        listPoints.forEach{
+//            it.x = arrF[iter].toInt()
+//            iter++
+//            it.y= arrF[iter].toInt()
+//            iter++
+//        }
+//        //     listPoints.last().middleX = (listPoints[listPoints.size - 2].x +  (dest/2)*listPoints.last().mCos).toInt()
+//        var lastP = MyPoint(0,0)
+//        //меняем средниные точки для изменённых
+//        listPoints.forEach{
+//            if(it.idPoint!=0){
+//                it.middleX =( lastP.x+it.x)/2
+//                it.middleY=( lastP.y+it.y)/2
+//                it.distance = calcDistance(lastP.x,lastP.y,it.x,it.y)
+//            }
+//            lastP = it
+//        }
+//    }
 
     private fun editSide(motionTouchEventX: Float, motionTouchEventY:
     Float, listPointsEdited: MutableList<MyPoint>){
@@ -178,23 +176,23 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         // для нажатия выберем середину отрезка с таким радиусом
         val circleRadiusEdit = 50
         for (i in 0 until listPointsEdited.size) {
-            val h = calcDistance(listPointsEdited[i].middleX, listPointsEdited[i].middleY, motionTouchEventX.toInt(), motionTouchEventY.toInt())
+            val h = calcDistance(listPointsEdited[i].middleX, listPointsEdited[i].middleY,
+                    motionTouchEventX.toInt(), motionTouchEventY.toInt())
         //условие при котором мы сравниваем радиус точки касания с нашей серединой отрезка
             if(circleRadiusEdit >= h){
                //здесь мы каснёмся последнего отрезка и Тостуем
-                if(listPointsEdited[i].idPoint == listPointsEdited.size-1){
-                    Toast.makeText(context,R.string.lastDistance,Toast.LENGTH_LONG).show()
-                    break
-                }
+        if(listPointsEdited[i].idPoint == listPointsEdited.size-1){//TODO его надо редактировать чтобы точка смешалась редактируя последний угол,но не задивая последнюю длину
+        Toast.makeText(context, R.string.lastDistance, Toast.LENGTH_LONG).show()
+        break
+        }
                 val xy = calcStartPoint(listPointsEdited[i])
                 pathEdit.moveTo(xy[0], xy[1])
                 pathEdit.lineTo(listPointsEdited[i].x.toFloat(), listPointsEdited[i].y.toFloat())
                 extraCanvas.drawPath(pathEdit, paintEdit)
                 //показываю диалог для ввода ширины
-                val dialofLenght = DialogLenght(this, listPointsEdited[i])
-
-                dialofLenght.show(supportFragmentManager, "missiles")
-
+                //todo() заменить диалог на активити с холо темой .т.к. в не могу сразу показать клаву для эдит текста
+                val dialogLength = DialogLenght(this, listPointsEdited[i])
+                dialogLength.show(supportFragmentManager, "missiles")
                 break
             }
         }
@@ -220,13 +218,12 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 //        paint.color = color
         //Снимаем показатели уже построенного пути и узнаём показатели последней точки для анализа дальнейшей
         if(!isFirstTouch && !isFigureDone ) {
-        val pMeasure = PathMeasure(path, false)
-        val pMeasureLenght = pMeasure.length
-        val pos = FloatArray(2)
-        val tan = FloatArray(2)
-        pMeasure.getPosTan(pMeasureLenght, pos, tan)
-        // Если не начало и не конец чертежа
-
+            val pMeasure = PathMeasure(path, false)
+            val pMeasureLength = pMeasure.length
+            val pos = FloatArray(2)
+            val tan = FloatArray(2)
+            pMeasure.getPosTan(pMeasureLength, pos, tan)
+            // Если не начало и не конец чертежа
             //Забираем длину последнего отрезка
             val dest = calcDistance(listPoints.last().x, listPoints.last().y,
                     (listPoints.get(listPoints.size - 2)).x, (listPoints.get(listPoints.size - 2).y))
@@ -247,23 +244,22 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                             listPoints.last().distance = calcDistance(listPoints.get(listPoints.size - 2).x, listPoints.get(listPoints.size - 2).y, listPoints.last().x, listPoints.last().y)
                             isFigureDone = true
                      }
-            //меняем последнюю точку пути в path на нашу расчитуннню
+            //меняем последнюю точку пути в path на нашу расчитанную
             path.setLastPoint(listPoints.last().x.toFloat(), listPoints.last().y.toFloat())
             }
         //наносим на канву наш изменённый путь
-        extraCanvas.drawPath(path, paint)
+          extraCanvas.drawPath(path, paint)
         //наносим кружки на наш путь
         listPoints.forEach{
             extraCanvas.drawCircle(it.x.toFloat(), it.y.toFloat(), circleRadius, paint)
         }
-
+        //выводим площадь и перметр
         if(isFigureDone){
             drawSquarePerimetr(listPoints)
             editSide(motionTouchEventX, motionTouchEventY, listPoints)
-
         }
-        drawNumberLenght()
-
+        //рисуем длину отрезков
+        drawNumberLength()
 
         //Это не первая точка черчежа
         isFirstTouch = false
@@ -276,15 +272,14 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
     }
 
-    private fun drawNumberLenght() {
-        var p = Paint();
-
-        p.setStrokeWidth(4F);
-        p.setStyle(Paint.Style.FILL);
+    private fun drawNumberLength() {
+        val p = Paint();
+        p.strokeWidth = 4F;
+        p.style = Paint.Style.FILL;
         p.textSize = 40f
         p.color = Color.BLACK
 
-        var path2 = Path()
+        val path2 = Path()
         var widthText = 0f;
         var distStr = ""
 
@@ -303,7 +298,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     private fun calcStartPoint(it: MyPoint):FloatArray{
-       var startXY = FloatArray(2)
+       val startXY = FloatArray(2)
         startXY[0] =(2 * it.middleX - it.x).toFloat()
         startXY[1] =(2 * it.middleY - it.y).toFloat()
         return startXY
@@ -311,36 +306,23 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
     private fun calcLastPoint(listPoints: MutableList<MyPoint>, tan: FloatArray, dest: Float): MutableList<MyPoint> {
         listPoints.last().mCos = roundOffDecimal(tan[0], "#").toFloat()
-
         listPoints.last().mSin = roundOffDecimal(tan[1], "#").toFloat()
 
         listPoints.last().x = (listPoints[listPoints.size - 2].x +  dest*listPoints.last().mCos).toInt()
         listPoints.last().y = (listPoints[listPoints.size - 2].y +  dest*listPoints.last().mSin).toInt()
         listPoints.last().distance = dest
 
-
         listPoints.last().middleX = (listPoints[listPoints.size - 2].x +  (dest/2)*listPoints.last().mCos).toInt()
         listPoints.last().middleY = (listPoints[listPoints.size - 2].y +  (dest/2)*listPoints.last().mSin).toInt()
-
         return listPoints
     }
 
     private fun roundOffDecimal(number: Float, s: String): String {
         val df = DecimalFormat(s)
         df.roundingMode = RoundingMode.HALF_EVEN
-
-//        val f: NumberFormat = NumberFormat.getInstance()
-//        if (f is DecimalFormat) {
-//            f.isDecimalSeparatorAlwaysShown = true
-//            f.roundingMode = RoundingMode.HALF_EVEN
-//
-//        }
-
-
         return df.format(number)
-
     }
-
+    //здесь происходит начальная инициализация канваса
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if(::extraBitmap.isInitialized) extraBitmap.recycle()
@@ -352,51 +334,30 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawBitmap(extraBitmap, 0f, 0f, null)
-
     }
-
-
+    //Метод остался от рисования пальцем на канвасе
     private fun touchMove() {
-        val dx = Math.abs(motionTouchEventX - currentX)
-        val dy = Math.abs(motionTouchEventY - currentY)
-
+        val dx = abs(motionTouchEventX - currentX)
+        val dy = abs(motionTouchEventY - currentY)
         //Log.d("dff",touchTolerance.toString())
-
-
-
 //        if(dx >= touchTolerance|| dy >= touchTolerance){
         if(dx >= 200 || dy >= 200){
 //            path.quadTo(currentX,currentY,(motionTouchEventX + currentX)/2
 //            ,(motionTouchEventY +currentY)/2)
-
             path.lineTo(
                     (motionTouchEventX + currentX) / 2, (motionTouchEventY + currentY) / 2
             )
-
             currentX = motionTouchEventX
             currentY = motionTouchEventY
-
             extraCanvas.drawPath(path, paint)
         }
-
         invalidate()
-
     }
     private fun calcDistance(x1: Int, y1: Int, x2: Int, y2: Int): Float {
-        var corx: Double = (x2-x1).toDouble()
-        var cory: Double = (y2-y1).toDouble()
-        return (Math.sqrt(corx.pow(2) + cory.pow(2))).toFloat()
-
+        val corx: Double = (x2-x1).toDouble()
+        val cory: Double = (y2-y1).toDouble()
+        return (sqrt(corx.pow(2) + cory.pow(2))).toFloat()
     }
-
-
-    override fun onDialogPositiveClick(lenght: String, idPoint: Int) {
-        listPoints = recalculatePoints(lenght, idPoint)
-        //метод отрисовки площади и переметра
-        drawSquarePerimetr(listPoints)
-    }
-
-
 //    function polygonArea(X, Y, numPoints)
 //    {
 //        area = 0;   // Accumulates area
@@ -426,23 +387,13 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             arrX.add(it.y)
            perimeter+=it.distance
         }
-//        Log.d("log",arrX.toString())
-//        Log.d("log",arrY.toString())
-//        arrX = mutableListOf(4,  4,  8,  8, -4,-4)
-//        arrY = mutableListOf(6, -4, -4, -8, -8, 6)
-//        numPoints = 6-1
-//        arrY = mutableListOf(197, 197, 508, 508, 174, 174)
-//        arrX = mutableListOf(1001, 534, 534, 915, 915, 971)
-//        numPoints = 6-1
-
-
         for(i in 0 .. numPoints){
             square+=(arrX[numPoints]+arrX[i])*(arrY[numPoints]-arrY[i])
             numPoints = i
         }
         square /= 2
-       val sq1 = roundOffDecimal((square/10000), "#.#")
-        val perRounded =roundOffDecimal((perimeter/100),"#.#")
+       val sq1 = roundOffDecimal((square / 10000), "#.#")
+        val perRounded =roundOffDecimal((perimeter / 100), "#.#")
        val sq2 = square
         val p = Paint();
 
@@ -455,27 +406,32 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
     }
 
-    private fun recalculatePoints(lenght: String, idPoint: Int): MutableList<MyPoint> {
+    private fun recalculatePoints(length: String, idPoint: Int): MutableList<MyPoint> {
+       var lengthInt = 0
+        try {
+            lengthInt = length.toInt()
+        } catch (e: NumberFormatException) {
+           Toast.makeText(context,R.string.notNumber,Toast.LENGTH_SHORT).show()
+            motionTouchEventX = 0f
+            motionTouchEventY = 0f
+            return listPoints
+        }
+
         val newListPoint = mutableListOf<MyPoint>()
         var previousPoint:MyPoint = listPoints[0]
         for(i in 0 until listPoints.size) {
-
             //здесь вылетела ошибка вышел за пределы масива
             if(listPoints[i].idPoint == idPoint){
                 var startXY = calcStartPoint(listPoints[i])
-//                listPoints = calcLastPoint(listPoints, tan, dest)
-         //       listPoints.last().x = (listPoints[listPoints.size - 2].x +  dest*listPoints.last().mCos).toInt()
-              //  Toast.makeText(context,listPoints[i].distance.toString(),Toast.LENGTH_LONG).show()
-                Log.d("log", "${listPoints[i].x} ; ${listPoints[i].y}")
+
                 previousPoint = listPoints[i]
                 newListPoint.add(listPoints[i])
-                newListPoint.last().x = (listPoints[i - 1].x + lenght.toInt()*(listPoints[i].mCos)).toInt()
-                newListPoint.last().y = (listPoints[i - 1].y + lenght.toInt()*(listPoints[i].mSin)).toInt()
-                newListPoint.last().distance = lenght.toFloat()
+                newListPoint.last().x = (listPoints[i - 1].x + lengthInt*(listPoints[i].mCos)).toInt()
+                newListPoint.last().y = (listPoints[i - 1].y + lengthInt*(listPoints[i].mSin)).toInt()
+                newListPoint.last().distance = lengthInt.toFloat()
                 newListPoint.last().middleX = (newListPoint.last().x + (listPoints[i - 1].x))/2
                 newListPoint.last().middleY = (newListPoint.last().y + (listPoints[i - 1].y))/2
 
-                Log.d("log", "${newListPoint.last().x} ; ${newListPoint.last().y}")
             }else{
 
                 newListPoint.add(listPoints[i])
@@ -484,21 +440,26 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 newListPoint.last().distance = calcDistance(newListPoint.last().x, newListPoint.last().y, previousPoint.x, previousPoint.y)
 
                 previousPoint = listPoints[i]
-
             }
-
-
         }
-
-            return newListPoint
+    return newListPoint
     }
 
     override fun onDialogNegativeClick(dialog: DialogFragment) {
         //надо найти центр фигуры, и вычислить увеличение про прямоугольнику вписанной фигуры
-        extraCanvas.scale(0.3f,0.3f, 400f,400f)
+        //  extraCanvas.scale(0.3f,0.3f, 400f,400f)
     }
+    override fun onDialogPositiveClick(dialog: String, idPoint: Int) {
+        listPoints = recalculatePoints(dialog, idPoint)
 
+        //метод отрисовки площади и периметра
+      //  drawSquarePerimetr(listPoints)
+            touchDown()
+        motionTouchEventX = 0f
+        motionTouchEventY = 0f
 
+            touchUp()
+    }
 }
 
 class MyPoint(var x: Int, var y: Int, var idPoint: Int = 0, var distance: Float = 0f,
