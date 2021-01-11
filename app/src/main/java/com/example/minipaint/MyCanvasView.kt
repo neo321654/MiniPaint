@@ -181,10 +181,11 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         //условие при котором мы сравниваем радиус точки касания с нашей серединой отрезка
             if(circleRadiusEdit >= h){
                //здесь мы каснёмся последнего отрезка и Тостуем
-        if(listPointsEdited[i].idPoint == listPointsEdited.size-1){//TODO его надо редактировать чтобы точка смешалась редактируя последний угол,но не задивая последнюю длину
-        Toast.makeText(context, R.string.lastDistance, Toast.LENGTH_LONG).show()
-        break
-        }
+//        if(listPointsEdited[i].idPoint == listPointsEdited.size-1){//TODO его надо редактировать чтобы точка смешалась редактируя последний угол,но не задивая последнюю длину
+//        Toast.makeText(context, R.string.lastDistance, Toast.LENGTH_LONG).show()
+//        break
+//        }
+                // рисуем выделение красным
                 val xy = calcStartPoint(listPointsEdited[i])
                 pathEdit.moveTo(xy[0], xy[1])
                 pathEdit.lineTo(listPointsEdited[i].x.toFloat(), listPointsEdited[i].y.toFloat())
@@ -424,13 +425,28 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             if(listPoints[i].idPoint == idPoint){
                 var startXY = calcStartPoint(listPoints[i])
 
-                previousPoint = listPoints[i]
-                newListPoint.add(listPoints[i])
-                newListPoint.last().x = (listPoints[i - 1].x + lengthInt*(listPoints[i].mCos)).toInt()
-                newListPoint.last().y = (listPoints[i - 1].y + lengthInt*(listPoints[i].mSin)).toInt()
-                newListPoint.last().distance = lengthInt.toFloat()
-                newListPoint.last().middleX = (newListPoint.last().x + (listPoints[i - 1].x))/2
-                newListPoint.last().middleY = (newListPoint.last().y + (listPoints[i - 1].y))/2
+                if(listPoints.last().idPoint == idPoint){
+
+                    previousPoint = listPoints[i]
+                    newListPoint.add(listPoints[i])
+//                    newListPoint.last().x = (listPoints[i - 1].x + lengthInt*(listPoints[i].mCos)).toInt()
+//                    newListPoint.last().y = (listPoints[i - 1].y + lengthInt*(listPoints[i].mSin)).toInt()
+                    newListPoint.last().x = listPoints[i].x
+                    newListPoint.last().y = listPoints[i].y
+
+                    newListPoint.last().distance = lengthInt.toFloat()
+                    newListPoint.last().middleX = (newListPoint.last().x + (listPoints[i - 1].x))/2
+                    newListPoint.last().middleY = (newListPoint.last().y + (listPoints[i - 1].y))/2
+                }else{
+
+                    previousPoint = listPoints[i]
+                    newListPoint.add(listPoints[i])
+                    newListPoint.last().x = (listPoints[i - 1].x + lengthInt*(listPoints[i].mCos)).toInt()
+                    newListPoint.last().y = (listPoints[i - 1].y + lengthInt*(listPoints[i].mSin)).toInt()
+                    newListPoint.last().distance = lengthInt.toFloat()
+                    newListPoint.last().middleX = (newListPoint.last().x + (listPoints[i - 1].x))/2
+                    newListPoint.last().middleY = (newListPoint.last().y + (listPoints[i - 1].y))/2
+                }
 
             }else{
 
@@ -457,7 +473,6 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             touchDown()
         motionTouchEventX = 0f
         motionTouchEventY = 0f
-
             touchUp()
     }
 }

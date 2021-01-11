@@ -28,7 +28,8 @@ class DialogLenght(myCanvasView: MyCanvasView, editedPoint: MyPoint) : DialogFra
                 .setView(inflater.inflate(R.layout.dialog_signin, null))
                 .setMessage(R.string.interLenght)
                     .setPositiveButton(R.string.posBut) { dialog, id ->
-                        listener.onDialogPositiveClick(getDialog()?.findViewById<EditText>(R.id.needLenght)?.text.toString(), editedPoint.idPoint)
+                        listener.onDialogPositiveClick(getDialog()?.findViewById<EditText>(R.id.needLenght)?.text.toString(),
+                                editedPoint.idPoint)
                     }
                     .setNegativeButton(R.string.cancel) { dialog, id ->
                         listener.onDialogNegativeClick(this)
@@ -37,15 +38,15 @@ class DialogLenght(myCanvasView: MyCanvasView, editedPoint: MyPoint) : DialogFra
             builder.create()
         }?: throw IllegalStateException("Activity can't be null")
 
-
-        dialog.setOnShowListener{
-            Log.d("log", "setOnShowListener")
-
-          //  Log.d("log", "${view?.findViewById<EditText>(R.id.needLenght)}")
-
-            Log.d("log", "${dialog.getButton(Dialog.BUTTON_NEGATIVE)}")
-
-        }
+//
+//        dialog.setOnShowListener{
+//            Log.d("log", "setOnShowListener")
+//
+//          //  Log.d("log", "${view?.findViewById<EditText>(R.id.needLenght)}")
+//
+//            Log.d("log", "${dialog.getButton(Dialog.BUTTON_NEGATIVE)}")
+//
+//        }
         return dialog
     }
 
