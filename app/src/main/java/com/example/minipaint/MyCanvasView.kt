@@ -227,7 +227,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             // Если не начало и не конец чертежа
             //Забираем длину последнего отрезка
             val dest = calcDistance(listPoints.last().x, listPoints.last().y,
-                    (listPoints.get(listPoints.size - 2)).x, (listPoints.get(listPoints.size - 2).y))
+                    (listPoints[listPoints.size - 2]).x, (listPoints[listPoints.size - 2].y))
             //Рассчитываем последнюю точку с учетом длины последнего отрезка и округлённого поворота последней точки
             //для того чтобы угол был либо 90 либо 45
             listPoints = calcLastPoint(listPoints, tan, dest)
@@ -248,6 +248,25 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             //меняем последнюю точку пути в path на нашу расчитанную
             path.setLastPoint(listPoints.last().x.toFloat(), listPoints.last().y.toFloat())
             }
+
+        //здесь проверяю на совпадение с последней точкой для удаления её
+        if(listPoints.size > 2 && !isFigureDone){
+        val xyToDelete = calcDistance(listPoints[listPoints.size-2].x, listPoints[listPoints.size-2].y,
+                motionTouchEventX.toInt(), motionTouchEventY.toInt())
+        if(xyToDelete <= 50 ){
+            Toast.makeText(context,"Last point",Toast.LENGTH_SHORT).show()
+            listPoints.removeAt(listPoints.size-1)
+            listPoints.removeAt(listPoints.size-1)
+            path.reset()
+            path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
+            listPoints.forEach{
+                path.lineTo(
+                        it.x.toFloat(), it.y.toFloat()
+                )
+            }
+        }}
+
+
         //наносим на канву наш изменённый путь
           extraCanvas.drawPath(path, paint)
         //наносим кружки на наш путь
@@ -265,11 +284,11 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         //Это не первая точка черчежа
         isFirstTouch = false
 
-//        var str = StringBuilder()
-//            listPoints.forEach{
-//                str!!.append("[${it.x} , ${it.y} , dist ${it.distance}]")
-//            }
-//        Log.d("Log", str.toString())
+        var str = StringBuilder()
+            listPoints.forEach{
+                str!!.append("[${it.x} , ${it.y} , dist ${it.distance}]")
+            }
+        Log.d("Log", str.toString())
 
     }
 
@@ -426,7 +445,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 var startXY = calcStartPoint(listPoints[i])
 
                 if(listPoints.last().idPoint == idPoint){
-
+                //todo сделать обработку последнего отрезка с помощью кругов, радиусов
                     previousPoint = listPoints[i]
                     newListPoint.add(listPoints[i])
 //                    newListPoint.last().x = (listPoints[i - 1].x + lengthInt*(listPoints[i].mCos)).toInt()
