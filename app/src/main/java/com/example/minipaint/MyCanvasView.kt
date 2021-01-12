@@ -265,14 +265,20 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 )
             }
         }}
-
-
         //наносим на канву наш изменённый путь
           extraCanvas.drawPath(path, paint)
+
         //наносим кружки на наш путь
         listPoints.forEach{
             extraCanvas.drawCircle(it.x.toFloat(), it.y.toFloat(), circleRadius, paint)
+
         }
+        val pCircle = Paint()
+        pCircle.color = Color.RED
+
+        extraCanvas.drawCircle(listPoints.last().x.toFloat(), listPoints.last().y.toFloat(), circleRadius-5, pCircle)
+        extraCanvas.drawLine(listPoints.last().x.toFloat()-15, listPoints.last().y.toFloat(),
+                listPoints.last().x.toFloat()+15, listPoints.last().y.toFloat(), paint)
         //выводим площадь и перметр
         if(isFigureDone){
             drawSquarePerimetr(listPoints)
@@ -284,7 +290,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         //Это не первая точка черчежа
         isFirstTouch = false
 
-        var str = StringBuilder()
+        val str = StringBuilder()
             listPoints.forEach{
                 str!!.append("[${it.x} , ${it.y} , dist ${it.distance}]")
             }
