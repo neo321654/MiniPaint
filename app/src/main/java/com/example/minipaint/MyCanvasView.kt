@@ -59,9 +59,16 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     private val listenerForDetectorGesture = object : GestureDetector.SimpleOnGestureListener(){
         override fun onLongPress(e: MotionEvent?) {
             super.onLongPress(e)
-
+            scaleCanvasToEdge(true)
             Toast.makeText(context, "h ${extraCanvas.height}; w${extraCanvas.width};", Toast.LENGTH_LONG).show()
         }
+
+        override fun onDoubleTap(e: MotionEvent?): Boolean {
+             super.onDoubleTap(e)
+            scaleCanvasToEdge(false)
+            return true
+        }
+
         //Этот метод необходимо переопределить а то не сработают другие жесты
         override fun onDown(e: MotionEvent): Boolean {
             return true
@@ -107,58 +114,67 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
     }
     // Увеличение чертежа до краёв
-//    private fun scaleCanvasToEdge() {
-//        //  extraCanvas.scale(0.9F, 0.9F)
-//        paint.color = Color.CYAN
-//        var pathRect = Path()
-//        val pathDest = Path()
-//        val rectfBounds = RectF()
-//        val rectfDest = RectF()
-//        val matrix = Matrix()
-//        matrix.reset()
-//        //10% on ширины девайса
-//        val bounds = (extraCanvas.width*0.1).toFloat()
-//        //прямоугольник-рамка для вписания
-//        rectfDest.set(bounds, bounds, extraCanvas.width-bounds, extraCanvas.height-bounds)
-//        //вычисление границ чертежа и присвоение этих границ прямоугольнику
-//        path.computeBounds(rectfBounds, true);
-//        //матрица выполняющая вписание одного прямоугольника в другой
-//        matrix.setRectToRect(rectfBounds, rectfDest, Matrix.ScaleToFit.CENTER);
-//        path.transform(matrix, pathDest);
-//        paint.color = Color.GREEN
-//        //здесь находим новые точки с помощью матрицы matrix.mapPoints()
-//       val arrF = FloatArray(listPoints.size*2)
-//       var iter = 0
-//        listPoints.forEach{
-//            arrF[iter]=it.x.toFloat()
-//            iter++
-//            arrF[iter]=it.y.toFloat()
-//            iter++
-//        }
-//        Log.d("log",arrF.joinToString("          ;"))
-//        matrix.mapPoints(arrF)
-//        Log.d("log",arrF.joinToString("          ;"))
-//        extraCanvas.drawPath(pathDest, paint)
-//        iter = 0
-//        //меняю ху на преобразованые из матрицы
-//        listPoints.forEach{
-//            it.x = arrF[iter].toInt()
-//            iter++
-//            it.y= arrF[iter].toInt()
-//            iter++
-//        }
-//        //     listPoints.last().middleX = (listPoints[listPoints.size - 2].x +  (dest/2)*listPoints.last().mCos).toInt()
-//        var lastP = MyPoint(0,0)
-//        //меняем средниные точки для изменённых
-//        listPoints.forEach{
-//            if(it.idPoint!=0){
-//                it.middleX =( lastP.x+it.x)/2
-//                it.middleY=( lastP.y+it.y)/2
-//                it.distance = calcDistance(lastP.x,lastP.y,it.x,it.y)
-//            }
-//            lastP = it
-//        }
-//    }
+    private fun scaleCanvasToEdge(isScale: Boolean) {
+        //  extraCanvas.scale(0.9F, 0.9F)
+        paint.color = Color.CYAN
+        var pathRect = Path()
+        val pathDest = Path()
+        val rectfBounds = RectF()
+        val rectfDest = RectF()
+        val matrix = Matrix()
+        matrix.reset()
+        //10% on ширины девайса
+        val bounds = (extraCanvas.width*0.1).toFloat()
+        //прямоугольник-рамка для вписания
+        rectfDest.set(bounds, bounds, extraCanvas.width-bounds, extraCanvas.height-bounds)
+        //вычисление границ чертежа и присвоение этих границ прямоугольнику
+        path.computeBounds(rectfBounds, true);
+        //матрица выполняющая вписание одного прямоугольника в другой
+        //matrix.setRectToRect(rectfBounds, rectfDest, Matrix.ScaleToFit.CENTER);
+        //попробую найти матрицу по краям чечежа и увеличить её
+        matrix.setRectToRect(rectfBounds, rectfBounds, Matrix.ScaleToFit.CENTER);
+        if(isScale){
+            matrix.setScale(1.5F, 1.5F, listPoints[1].x.toFloat(),listPoints[1].y.toFloat())
+        }else{
+            matrix.setScale(0.5F, 0.5F, listPoints[1].x.toFloat(),listPoints[1].y.toFloat())
+        }
+
+
+        path.transform(matrix, pathDest);
+        paint.color = Color.GREEN
+        //здесь находим новые точки с помощью матрицы matrix.mapPoints()
+       val arrF = FloatArray(listPoints.size*2)
+       var iter = 0
+        listPoints.forEach{
+            arrF[iter]=it.x.toFloat()
+            iter++
+            arrF[iter]=it.y.toFloat()
+            iter++
+        }
+        Log.d("log",arrF.joinToString("          ;"))
+        matrix.mapPoints(arrF)
+        Log.d("log",arrF.joinToString("          ;"))
+        extraCanvas.drawPath(pathDest, paint)
+        iter = 0
+        //меняю ху на преобразованые из матрицы
+        listPoints.forEach{
+            it.x = arrF[iter].toInt()
+            iter++
+            it.y= arrF[iter].toInt()
+            iter++
+        }
+        //     listPoints.last().middleX = (listPoints[listPoints.size - 2].x +  (dest/2)*listPoints.last().mCos).toInt()
+        var lastP = MyPoint(0,0)
+        //меняем средниные точки для изменённых
+        listPoints.forEach{
+            if(it.idPoint!=0){
+                it.middleX =( lastP.x+it.x)/2
+                it.middleY=( lastP.y+it.y)/2
+                it.distance = calcDistance(lastP.x,lastP.y,it.x,it.y)
+            }
+            lastP = it
+        }
+    }
 
     private fun editSide(motionTouchEventX: Float, motionTouchEventY:
     Float, listPointsEdited: MutableList<MyPoint>){
@@ -275,10 +291,12 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
         val pCircle = Paint()
         pCircle.color = Color.RED
+            if(!isFigureDone){
+                extraCanvas.drawCircle(listPoints.last().x.toFloat(), listPoints.last().y.toFloat(), circleRadius-5, pCircle)
+                extraCanvas.drawLine(listPoints.last().x.toFloat()-15, listPoints.last().y.toFloat(),
+                        listPoints.last().x.toFloat()+15, listPoints.last().y.toFloat(), paint)
+            }
 
-        extraCanvas.drawCircle(listPoints.last().x.toFloat(), listPoints.last().y.toFloat(), circleRadius-5, pCircle)
-        extraCanvas.drawLine(listPoints.last().x.toFloat()-15, listPoints.last().y.toFloat(),
-                listPoints.last().x.toFloat()+15, listPoints.last().y.toFloat(), paint)
         //выводим площадь и перметр
         if(isFigureDone){
             drawSquarePerimetr(listPoints)
