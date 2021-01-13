@@ -113,7 +113,12 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt()))
         }
         //    Опускаем кисть на начальную точку чертежа
-        path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
+        if(isFigureDone){
+            path.moveTo(scaledListPoints[0].x.toFloat(), scaledListPoints[0].y.toFloat())
+        }else{
+            path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
+        }
+
     }
     // Увеличение чертежа до краёв
     private fun scaleCanvas(isScale: Boolean) {
@@ -160,9 +165,9 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             arrF[iter]=it.y.toFloat()
             iter++
         }
-        Log.d("log",arrF.joinToString("          ;"))
+    //    Log.d("log",arrF.joinToString("          ;"))
         matrix.mapPoints(arrF)
-        Log.d("log",arrF.joinToString("          ;"))
+     //   Log.d("log",arrF.joinToString("          ;"))
      //   extraCanvas.drawPath(pathDest, paint)
         iter = 0
         //меняю ху на преобразованые из матрицы
@@ -281,18 +286,13 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                             isFigureDone = true
                             // назначаю увеличеные точки для маштабов
                             listPoints.forEach{
+                                //копирую дата объекты что бы не было проблем с ссылками
                                 scaledListPoints.add(it.copy())
                             }
-
-
                      }
             //меняем последнюю точку пути в path на нашу расчитанную
             path.setLastPoint(listPoints.last().x.toFloat(), listPoints.last().y.toFloat())
-            //запоминаю начальную матрицу после замыкания фигуры
-            val rectfBounds = RectF()
-            path.computeBounds(rectfBounds, true);
-           // Toast.makeText(context,"matrix",Toast.LENGTH_SHORT).show()
-            matrixIsFigureDone.setRectToRect(rectfBounds, rectfBounds, Matrix.ScaleToFit.CENTER);
+
             }
 
         //здесь проверяю на совпадение с последней точкой для удаления её
@@ -315,9 +315,14 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
           extraCanvas.drawPath(path, paint)
 
         //наносим кружки на наш путь
-        listPoints.forEach{
+        if(isFigureDone){
+            scaledListPoints.forEach{
+                extraCanvas.drawCircle(it.x.toFloat(), it.y.toFloat(), circleRadius, paint)
+            }
+        }else{
+            listPoints.forEach{
             extraCanvas.drawCircle(it.x.toFloat(), it.y.toFloat(), circleRadius, paint)
-
+            }
         }
 
       //рисую крейнюю точку для удаления
@@ -335,7 +340,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             editSide(motionTouchEventX, motionTouchEventY, listPoints)
         }
         //рисуем длину отрезков
-        //todo надо рисовать округлённые значения , а точки сохранять во float , для большей точности при увеличении и уменьшении.
+        //todo надо или не надо рисовать округлённые значения , а точки сохранять во float , для большей точности при увеличении и уменьшении.
         drawNumberLength()
 
         //Это не первая точка черчежа
@@ -343,9 +348,15 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         val str = StringBuilder()
             listPoints.forEach{
-                str!!.append("[${it.x} , ${it.y} , dist ${it.distance}]")
+                str!!.append("[${it.x} , ${it.y} , dist ${it.distance}, mX ${it.middleX}, mY ${it.middleY}]")
             }
         Log.d("Log", str.toString())
+
+        val str1 = StringBuilder()
+        scaledListPoints.forEach{
+            str1!!.append("[${it.x} , ${it.y} , dist ${it.distance}, mX ${it.middleX}, mY ${it.middleY}]")
+        }
+        Log.d("Log", "*$str1")
 
     }
 
@@ -360,16 +371,34 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         var widthText = 0f;
         var distStr = ""
 
-        listPoints.forEach {
-            //проверяю что это не первая точка
-            if (it.middleX != 0 && it.middleY != 0 && it.idPoint!=0) {
-                distStr = (it.distance.toInt()).toString()
-                val xy =calcStartPoint(it)
-                path2.moveTo(xy[0], xy[1])
-                path2.lineTo(it.x.toFloat(), it.y.toFloat())
-                widthText = p.measureText(distStr);
-                extraCanvas.drawTextOnPath(distStr, path2, (it.distance.toInt() - widthText) / 2, -10F, p)
-                path2.reset()
+        if(isFigureDone){
+            scaledListPoints.forEach {
+                //проверяю что это не первая точка
+                if (it.middleX != 0 && it.middleY != 0 && it.idPoint!=0) {
+                    distStr = (it.distance.toInt()).toString()
+                    val xy =calcStartPoint(it)
+                    path2.moveTo(xy[0], xy[1])
+                    path2.lineTo(it.x.toFloat(), it.y.toFloat())
+
+                    val realDist = calcDistance(xy[0].toInt(),xy[1].toInt(),it.x, it.y)
+
+                    widthText = p.measureText(distStr);
+                    extraCanvas.drawTextOnPath(distStr, path2, (realDist - widthText) / 2, -10F, p)
+                    path2.reset()
+                }
+            }
+        }else{
+            listPoints.forEach {
+                //проверяю что это не первая точка
+                if (it.middleX != 0 && it.middleY != 0 && it.idPoint!=0) {
+                    distStr = (it.distance.toInt()).toString()
+                    val xy =calcStartPoint(it)
+                    path2.moveTo(xy[0], xy[1])
+                    path2.lineTo(it.x.toFloat(), it.y.toFloat())
+                    widthText = p.measureText(distStr);
+                    extraCanvas.drawTextOnPath(distStr, path2, (it.distance.toInt() - widthText) / 2, -10F, p)
+                    path2.reset()
+                }
             }
         }
     }
