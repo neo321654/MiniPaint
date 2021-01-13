@@ -528,7 +528,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         var realDistanceScaled = lengthInt*coefici
 
         Log.d("log", "$coefici   realDistanceScaled = $realDistanceScaled")
-
+                //todo после ввода значений эдит текста при увеличении не правильно прорисовывается , либо лишняя отрисовка либо отсутствие заливки
 
         val newListPoint = mutableListOf<MyPoint>()
         var previousPoint:MyPoint = scaledListPoints[0]
