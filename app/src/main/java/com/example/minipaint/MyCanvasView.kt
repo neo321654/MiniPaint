@@ -337,7 +337,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         //выводим площадь и перметр
         if(isFigureDone){
             drawSquarePerimetr(listPoints)
-            editSide(motionTouchEventX, motionTouchEventY, listPoints)
+            editSide(motionTouchEventX, motionTouchEventY, scaledListPoints)
         }
         //рисуем длину отрезков
         //todo надо или не надо рисовать округлённые значения , а точки сохранять во float , для большей точности при увеличении и уменьшении.
@@ -354,7 +354,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         val str1 = StringBuilder()
         scaledListPoints.forEach{
-            str1!!.append("[${it.x} , ${it.y} , dist ${it.distance}, mX ${it.middleX}, mY ${it.middleY}]")
+            str1!!.append("[${it.x} , ${it.y} , dist ${it.distance}, dist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
         }
         Log.d("Log", "*$str1")
 
@@ -381,7 +381,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     path2.lineTo(it.x.toFloat(), it.y.toFloat())
 
                     val realDist = calcDistance(xy[0].toInt(),xy[1].toInt(),it.x, it.y)
-
+                    it.realDistance = realDist
                     widthText = p.measureText(distStr);
                     extraCanvas.drawTextOnPath(distStr, path2, (realDist - widthText) / 2, -10F, p)
                     path2.reset()
@@ -514,6 +514,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
     private fun recalculatePoints(length: String, idPoint: Int): MutableList<MyPoint> {
        var lengthInt = 0
+               //todo эту обработку надо сделать в самом диалоге, чтобы не бесить юзера
         try {
             lengthInt = length.toInt()
         } catch (e: NumberFormatException) {
@@ -523,44 +524,66 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             return listPoints
         }
 
-        val newListPoint = mutableListOf<MyPoint>()
-        var previousPoint:MyPoint = listPoints[0]
-        for(i in 0 until listPoints.size) {
-            //здесь вылетела ошибка вышел за пределы масива
-            if(listPoints[i].idPoint == idPoint){
-                var startXY = calcStartPoint(listPoints[i])
+        val coefici = scaledListPoints.last().realDistance/listPoints.last().distance
+        var realDistanceScaled = lengthInt*coefici
 
-                if(listPoints.last().idPoint == idPoint){
+        Log.d("log", "$coefici   realDistanceScaled = $realDistanceScaled")
+
+
+        val newListPoint = mutableListOf<MyPoint>()
+        var previousPoint:MyPoint = scaledListPoints[0]
+        for(i in 0 until scaledListPoints.size) {
+            //здесь вылетела ошибка вышел за пределы масива
+            if(scaledListPoints[i].idPoint == idPoint){
+                var startXY = calcStartPoint(scaledListPoints[i])
+
+                if(scaledListPoints.last().idPoint == idPoint){
                 //todo сделать обработку последнего отрезка с помощью кругов, радиусов
-                    previousPoint = listPoints[i]
-                    newListPoint.add(listPoints[i])
+
+                    previousPoint = scaledListPoints[i]
+                    newListPoint.add(scaledListPoints[i])
 //                    newListPoint.last().x = (listPoints[i - 1].x + lengthInt*(listPoints[i].mCos)).toInt()
 //                    newListPoint.last().y = (listPoints[i - 1].y + lengthInt*(listPoints[i].mSin)).toInt()
-                    newListPoint.last().x = listPoints[i].x
-                    newListPoint.last().y = listPoints[i].y
+                    newListPoint.last().x = scaledListPoints[i].x
+                    newListPoint.last().y = scaledListPoints[i].y
 
                     newListPoint.last().distance = lengthInt.toFloat()
-                    newListPoint.last().middleX = (newListPoint.last().x + (listPoints[i - 1].x))/2
-                    newListPoint.last().middleY = (newListPoint.last().y + (listPoints[i - 1].y))/2
+                    newListPoint.last().middleX = (newListPoint.last().x + (scaledListPoints[i - 1].x))/2
+                    newListPoint.last().middleY = (newListPoint.last().y + (scaledListPoints[i - 1].y))/2
                 }else{
+                //здесь преобразуем длину отрезка , но не последнего
+                    previousPoint = scaledListPoints[i]
+                    newListPoint.add(scaledListPoints[i])
+                //надо сравнить дистанцию увеличенного и начального отрезка , выявить коэфицент,
+                    //после найти длину для вставки
 
-                    previousPoint = listPoints[i]
-                    newListPoint.add(listPoints[i])
-                    newListPoint.last().x = (listPoints[i - 1].x + lengthInt*(listPoints[i].mCos)).toInt()
-                    newListPoint.last().y = (listPoints[i - 1].y + lengthInt*(listPoints[i].mSin)).toInt()
+
+                    newListPoint.last().x = (scaledListPoints[i - 1].x + realDistanceScaled*(scaledListPoints[i].mCos)).toInt()
+                    newListPoint.last().y = (scaledListPoints[i - 1].y + realDistanceScaled*(scaledListPoints[i].mSin)).toInt()
+                    //дистанцию у увеличеного листа pacчитываю реально, хотя это не требуется она отображается как надо
+
                     newListPoint.last().distance = lengthInt.toFloat()
-                    newListPoint.last().middleX = (newListPoint.last().x + (listPoints[i - 1].x))/2
-                    newListPoint.last().middleY = (newListPoint.last().y + (listPoints[i - 1].y))/2
+                    newListPoint.last().realDistance = realDistanceScaled
+                    //преобразую длину и следующую точку в начальном не редактируемом листе
+                    listPoints[i].x = (listPoints[i - 1].x + lengthInt*(listPoints[i].mCos)).toInt()
+                    listPoints[i].y = (listPoints[i - 1].y + lengthInt*(listPoints[i].mSin)).toInt()
+                    listPoints[i].middleX = (listPoints[i].x + (listPoints[i - 1].x))/2
+                    listPoints[i].middleY = (listPoints[i].y + (listPoints[i - 1].y))/2
+                    listPoints[i].distance = lengthInt.toFloat()
+
+
+                    newListPoint.last().middleX = (newListPoint.last().x + (scaledListPoints[i - 1].x))/2
+                    newListPoint.last().middleY = (newListPoint.last().y + (scaledListPoints[i - 1].y))/2
                 }
 
             }else{
-
-                newListPoint.add(listPoints[i])
+            //здесь допалняем лист если не совпали айдишники
+                newListPoint.add(scaledListPoints[i])
                 newListPoint.last().middleX = (newListPoint.last().x + (previousPoint.x))/2
                 newListPoint.last().middleY = (newListPoint.last().y + (previousPoint.y))/2
-                newListPoint.last().distance = calcDistance(newListPoint.last().x, newListPoint.last().y, previousPoint.x, previousPoint.y)
+               // newListPoint.last().distance = calcDistance(newListPoint.last().x, newListPoint.last().y, previousPoint.x, previousPoint.y)
 
-                previousPoint = listPoints[i]
+                previousPoint = scaledListPoints[i]
             }
         }
     return newListPoint
@@ -571,7 +594,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         //  extraCanvas.scale(0.3f,0.3f, 400f,400f)
     }
     override fun onDialogPositiveClick(dialog: String, idPoint: Int) {
-        listPoints = recalculatePoints(dialog, idPoint)
+      //  listPoints = recalculatePoints(dialog, idPoint)
+        scaledListPoints = recalculatePoints(dialog, idPoint)
 
         //метод отрисовки площади и периметра
       //  drawSquarePerimetr(listPoints)
@@ -583,4 +607,4 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 }
 
 data class MyPoint(var x: Int, var y: Int, var idPoint: Int = 0, var distance: Float = 0f,
-              var mCos: Float = 0f, var mSin: Float = 0f, var middleX: Int = 0, var middleY: Int = 0)
+              var mCos: Float = 0f, var mSin: Float = 0f, var middleX: Int = 0, var middleY: Int = 0,var realDistance: Float = 0f)
