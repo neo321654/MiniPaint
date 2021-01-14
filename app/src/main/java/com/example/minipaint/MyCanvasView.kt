@@ -270,7 +270,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     (listPoints[listPoints.size - 2]).x, (listPoints[listPoints.size - 2].y))
             //Рассчитываем последнюю точку с учетом длины последнего отрезка и округлённого поворота последней точки
             //для того чтобы угол был либо 90 либо 45
-            listPoints = calcLastPoint(listPoints, tan, dest)
+            listPoints = calcNextPoint(listPoints, tan, dest)
             //Меняем последнюю точку в листе , но не рисуем её покачто
             //Находим расстояние от последней рассчитаной точки до самой первой точки
             //и если оно меньше чем радиус нашим кружков, значит мы попали в кружок
@@ -296,6 +296,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             }
 
         //здесь проверяю на совпадение с последней точкой для удаления её
+        //удаление последней точки в чертеже
         if(listPoints.size > 2 && !isFigureDone){
         val xyToDelete = calcDistance(listPoints[listPoints.size-2].x, listPoints[listPoints.size-2].y,
                 motionTouchEventX.toInt(), motionTouchEventY.toInt())
@@ -410,7 +411,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         return startXY
     }
 
-    private fun calcLastPoint(listPoints: MutableList<MyPoint>, tan: FloatArray, dest: Float): MutableList<MyPoint> {
+    //todo Need to change , для редактирования scaled
+    private fun calcNextPoint(listPoints: MutableList<MyPoint>, tan: FloatArray, dest: Float): MutableList<MyPoint> {
         listPoints.last().mCos = roundOffDecimal(tan[0], "#").toFloat()
         listPoints.last().mSin = roundOffDecimal(tan[1], "#").toFloat()
 
@@ -422,6 +424,39 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         listPoints.last().middleY = (listPoints[listPoints.size - 2].y +  (dest/2)*listPoints.last().mSin).toInt()
         return listPoints
     }
+
+    private fun calcAllNextPoints(editedListPoints: MutableList<MyPoint>,idPoint:Int, length: String): MutableList<MyPoint> {
+
+        var lengthInt = 0
+        //todo эту обработку надо сделать в самом диалоге, чтобы не бесить юзера
+        try {
+            lengthInt = length.toInt()
+        } catch (e: NumberFormatException) {
+            Toast.makeText(context,R.string.notNumber,Toast.LENGTH_SHORT).show()
+            motionTouchEventX = 0f
+            motionTouchEventY = 0f
+            return editedListPoints
+        }
+        for(i in 0..editedListPoints.size){
+
+
+
+
+        }
+        return editedListPoints
+
+//        listPoints.last().mCos = roundOffDecimal(tan[0], "#").toFloat()
+//        listPoints.last().mSin = roundOffDecimal(tan[1], "#").toFloat()
+//
+//        listPoints.last().x = (listPoints[listPoints.size - 2].x +  dest*listPoints.last().mCos).toInt()
+//        listPoints.last().y = (listPoints[listPoints.size - 2].y +  dest*listPoints.last().mSin).toInt()
+//        listPoints.last().distance = dest
+//
+//        listPoints.last().middleX = (listPoints[listPoints.size - 2].x +  (dest/2)*listPoints.last().mCos).toInt()
+//        listPoints.last().middleY = (listPoints[listPoints.size - 2].y +  (dest/2)*listPoints.last().mSin).toInt()
+//        return listPoints
+    }
+
 
     private fun roundOffDecimal(number: Float, s: String): String {
         val df = DecimalFormat(s)
@@ -536,9 +571,10 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             //здесь вылетела ошибка вышел за пределы масива
             if(scaledListPoints[i].idPoint == idPoint){
                 var startXY = calcStartPoint(scaledListPoints[i])
-
+// сделать редактирование последнего только смещение будет идти в обратную сторону
                 if(scaledListPoints.last().idPoint == idPoint){
-                //todo сделать обработку последнего отрезка с помощью кругов, радиусов
+                //todo сделать обработку последнего отрезка с помощью кругов, радиусов, или забить на это и
+
 
                     previousPoint = scaledListPoints[i]
                     newListPoint.add(scaledListPoints[i])
@@ -550,7 +586,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     newListPoint.last().distance = lengthInt.toFloat()
                     newListPoint.last().middleX = (newListPoint.last().x + (scaledListPoints[i - 1].x))/2
                     newListPoint.last().middleY = (newListPoint.last().y + (scaledListPoints[i - 1].y))/2
-                }else{
+                }
+                else{
                 //здесь преобразуем длину отрезка , но не последнего
                     previousPoint = scaledListPoints[i]
                     newListPoint.add(scaledListPoints[i])
@@ -593,9 +630,10 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         //надо найти центр фигуры, и вычислить увеличение про прямоугольнику вписанной фигуры
         //  extraCanvas.scale(0.3f,0.3f, 400f,400f)
     }
-    override fun onDialogPositiveClick(dialog: String, idPoint: Int) {
+    override fun onDialogPositiveClick(dist: String, idPoint: Int) {
       //  listPoints = recalculatePoints(dialog, idPoint)
-        scaledListPoints = recalculatePoints(dialog, idPoint)
+    //    scaledListPoints = recalculatePoints(dialog, idPoint)
+        scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint,dist)
 
         //метод отрисовки площади и периметра
       //  drawSquarePerimetr(listPoints)
