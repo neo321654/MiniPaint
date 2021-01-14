@@ -76,6 +76,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             return true
         }
     }
+
  //   private val detector: GestureDetector = GestureDetector(context,myListener)
     private val detectorGesture: GestureDetector = GestureDetector(context, listenerForDetectorGesture)
 
@@ -107,6 +108,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
         return true
     }
+
     private fun touchDown() {
         if(listPoints.isEmpty()){
             //   Добавляем первую точку если начало чертежа
@@ -114,12 +116,146 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
         //    Опускаем кисть на начальную точку чертежа
         if(isFigureDone){
+            path.reset()
             path.moveTo(scaledListPoints[0].x.toFloat(), scaledListPoints[0].y.toFloat())
         }else{
+            path.reset()
             path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
         }
+    }
+
+    private fun touchUp() {
+        //если не начало и не конец чертежа добавляем точку в список
+        if(!isFirstTouch && !isFigureDone) {
+            counterPointId++
+            listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt(), counterPointId))
+        }
+        //Заливаем канву цветом
+        extraCanvas.drawColor(backgroundColor)
+        //Рисуем весь путь с изветными точками
+        if(isFigureDone){
+            scaledListPoints.forEach{
+                path.lineTo(
+                        it.x.toFloat(), it.y.toFloat()
+                )
+            }
+        }else{
+            listPoints.forEach{
+                path.lineTo(
+                        it.x.toFloat(), it.y.toFloat()
+                )
+            }
+        }
+
+        //Здесь меняем цвет пути рандомно , чтобы понимать отклонения от пути и как работает перерисовка
+//        val rnd =  Random()
+//        val color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
+//        paint.color = color
+        //Снимаем показатели уже построенного пути и узнаём показатели последней точки для анализа дальнейшей
+        if(!isFirstTouch && !isFigureDone ) {
+            val pMeasure = PathMeasure(path, false)
+            val pMeasureLength = pMeasure.length
+            val pos = FloatArray(2)
+            val tan = FloatArray(2)
+            pMeasure.getPosTan(pMeasureLength, pos, tan)
+            // Если не начало и не конец чертежа
+            //Забираем длину последнего отрезка
+            val dest = calcDistance(listPoints.last().x, listPoints.last().y,
+                    (listPoints[listPoints.size - 2]).x, (listPoints[listPoints.size - 2].y))
+            //Рассчитываем последнюю точку с учетом длины последнего отрезка и округлённого поворота последней точки
+            //для того чтобы угол был либо 90 либо 45
+            listPoints = calcNextPoint(listPoints, tan, dest)
+            //Меняем последнюю точку в листе , но не рисуем её покачто
+            //Находим расстояние от последней рассчитаной точки до самой первой точки
+            //и если оно меньше чем радиус нашим кружков, значит мы попали в кружок
+            //и замыкаем чертёж автоматически и фигура заканчивается
+            val h = calcDistance(listPoints[0].x, listPoints[0].y, motionTouchEventX.toInt(), motionTouchEventY.toInt())
+            if(circleRadius >= h){
+                listPoints.last().x = listPoints[0].x
+                listPoints.last().y = listPoints[0].y
+                listPoints.last().middleX = (listPoints.get(listPoints.size - 2).x + listPoints[0].x)/2
+                listPoints.last().middleY = (listPoints.get(listPoints.size - 2).y + listPoints[0].y)/2
+                //Пересчитываю последнюю длину с учетом изменений
+                listPoints.last().distance = calcDistance(listPoints.get(listPoints.size - 2).x, listPoints.get(listPoints.size - 2).y, listPoints.last().x, listPoints.last().y)
+                isFigureDone = true
+                // назначаю увеличеные точки для маштабов
+                listPoints.forEach{
+                    //копирую дата объекты что бы не было проблем с ссылками
+                    scaledListPoints.add(it.copy())
+                }
+            }
+            //меняем последнюю точку пути в path на нашу расчитанную
+            path.setLastPoint(listPoints.last().x.toFloat(), listPoints.last().y.toFloat())
+
+        }
+
+        //здесь проверяю на совпадение с последней точкой для удаления её
+        //удаление последней точки в чертеже
+        if(listPoints.size > 2 && !isFigureDone){
+            val xyToDelete = calcDistance(listPoints[listPoints.size-2].x, listPoints[listPoints.size-2].y,
+                    motionTouchEventX.toInt(), motionTouchEventY.toInt())
+            if(xyToDelete <= 50 ){
+                //   Toast.makeText(context,"Last point",Toast.LENGTH_SHORT).show()
+                listPoints.removeAt(listPoints.size-1)
+                listPoints.removeAt(listPoints.size-1)
+                path.reset()
+                path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
+                listPoints.forEach{
+                    path.lineTo(
+                            it.x.toFloat(), it.y.toFloat()
+                    )
+                }
+            }}
+        //наносим на канву наш изменённый путь
+        extraCanvas.drawPath(path, paint)
+
+        //наносим кружки на наш путь
+        if(isFigureDone){
+            scaledListPoints.forEach{
+                extraCanvas.drawCircle(it.x.toFloat(), it.y.toFloat(), circleRadius, paint)
+            }
+        }else{
+            listPoints.forEach{
+                extraCanvas.drawCircle(it.x.toFloat(), it.y.toFloat(), circleRadius, paint)
+            }
+        }
+
+        //рисую крейнюю точку для удаления
+        if(!isFigureDone){
+            val pCircle = Paint()
+            pCircle.color = Color.RED
+            extraCanvas.drawCircle(listPoints.last().x.toFloat(), listPoints.last().y.toFloat(), circleRadius-5, pCircle)
+            extraCanvas.drawLine(listPoints.last().x.toFloat()-15, listPoints.last().y.toFloat(),
+                    listPoints.last().x.toFloat()+15, listPoints.last().y.toFloat(), paint)
+        }
+
+        //выводим площадь и перметр
+        if(isFigureDone){
+            //todo вот для чего нужен началный лист, чтобы правильно вычислять площадь , но его надо релактировать при изменении сторо
+            drawSquarePerimetr(listPoints)
+            editSide(motionTouchEventX, motionTouchEventY, scaledListPoints)
+        }
+        //рисуем длину отрезков
+        //todo надо или не надо рисовать округлённые значения , а точки сохранять во float , для большей точности при увеличении и уменьшении.
+        drawNumberLength()
+
+        //Это не первая точка черчежа
+        isFirstTouch = false
+
+//        val str = StringBuilder()
+//            listPoints.forEach{
+//                str!!.append("[${it.x} , ${it.y} , dist ${it.distance}, mX ${it.middleX}, mY ${it.middleY}]")
+//            }
+//        Log.d("Log", str.toString())
+//
+//        val str1 = StringBuilder()
+//        scaledListPoints.forEach{
+//            str1!!.append("[${it.x} , ${it.y} , dist ${it.distance}, dist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
+//        }
+//        Log.d("Log", "*$str1")
 
     }
+
     // Увеличение чертежа до краёв
     private fun scaleCanvas(isScale: Boolean) {
         //  extraCanvas.scale(0.9F, 0.9F)
@@ -223,143 +359,15 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 extraCanvas.drawPath(pathEdit, paintEdit)
                 //показываю диалог для ввода ширины
                 //todo() заменить диалог на активити с холо темой .т.к. в не могу сразу показать клаву для эдит текста
+
                 val dialogLength = DialogLenght(this, listPointsEdited[i])
                 dialogLength.show(supportFragmentManager, "missiles")
+
                 break
             }
         }
     }
 
-    private fun touchUp() {
-        //если не начало и не конец чертежа добавляем точку в список
-        if(!isFirstTouch && !isFigureDone) {
-                counterPointId++
-                listPoints.add(MyPoint(motionTouchEventX.toInt(), motionTouchEventY.toInt(), counterPointId))
-        }
-        //Заливаем канву цветом
-        extraCanvas.drawColor(backgroundColor)
-        //Рисуем весь путь с изветными точками
-      if(isFigureDone){
-          scaledListPoints.forEach{
-              path.lineTo(
-                      it.x.toFloat(), it.y.toFloat()
-              )
-          }
-      }else{
-          listPoints.forEach{
-              path.lineTo(
-                      it.x.toFloat(), it.y.toFloat()
-              )
-          }
-      }
-
-        //Здесь меняем цвет пути рандомно , чтобы понимать отклонения от пути и как работает перерисовка
-//        val rnd =  Random()
-//        val color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
-//        paint.color = color
-        //Снимаем показатели уже построенного пути и узнаём показатели последней точки для анализа дальнейшей
-        if(!isFirstTouch && !isFigureDone ) {
-            val pMeasure = PathMeasure(path, false)
-            val pMeasureLength = pMeasure.length
-            val pos = FloatArray(2)
-            val tan = FloatArray(2)
-            pMeasure.getPosTan(pMeasureLength, pos, tan)
-            // Если не начало и не конец чертежа
-            //Забираем длину последнего отрезка
-            val dest = calcDistance(listPoints.last().x, listPoints.last().y,
-                    (listPoints[listPoints.size - 2]).x, (listPoints[listPoints.size - 2].y))
-            //Рассчитываем последнюю точку с учетом длины последнего отрезка и округлённого поворота последней точки
-            //для того чтобы угол был либо 90 либо 45
-            listPoints = calcNextPoint(listPoints, tan, dest)
-            //Меняем последнюю точку в листе , но не рисуем её покачто
-            //Находим расстояние от последней рассчитаной точки до самой первой точки
-            //и если оно меньше чем радиус нашим кружков, значит мы попали в кружок
-            //и замыкаем чертёж автоматически и фигура заканчивается
-            val h = calcDistance(listPoints[0].x, listPoints[0].y, motionTouchEventX.toInt(), motionTouchEventY.toInt())
-                        if(circleRadius >= h){
-                            listPoints.last().x = listPoints[0].x
-                            listPoints.last().y = listPoints[0].y
-                            listPoints.last().middleX = (listPoints.get(listPoints.size - 2).x + listPoints[0].x)/2
-                            listPoints.last().middleY = (listPoints.get(listPoints.size - 2).y + listPoints[0].y)/2
-                            //Пересчитываю последнюю длину с учетом изменений
-                            listPoints.last().distance = calcDistance(listPoints.get(listPoints.size - 2).x, listPoints.get(listPoints.size - 2).y, listPoints.last().x, listPoints.last().y)
-                            isFigureDone = true
-                            // назначаю увеличеные точки для маштабов
-                            listPoints.forEach{
-                                //копирую дата объекты что бы не было проблем с ссылками
-                                scaledListPoints.add(it.copy())
-                            }
-                     }
-            //меняем последнюю точку пути в path на нашу расчитанную
-            path.setLastPoint(listPoints.last().x.toFloat(), listPoints.last().y.toFloat())
-
-            }
-
-        //здесь проверяю на совпадение с последней точкой для удаления её
-        //удаление последней точки в чертеже
-        if(listPoints.size > 2 && !isFigureDone){
-        val xyToDelete = calcDistance(listPoints[listPoints.size-2].x, listPoints[listPoints.size-2].y,
-                motionTouchEventX.toInt(), motionTouchEventY.toInt())
-        if(xyToDelete <= 50 ){
-         //   Toast.makeText(context,"Last point",Toast.LENGTH_SHORT).show()
-            listPoints.removeAt(listPoints.size-1)
-            listPoints.removeAt(listPoints.size-1)
-            path.reset()
-            path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
-            listPoints.forEach{
-                path.lineTo(
-                        it.x.toFloat(), it.y.toFloat()
-                )
-            }
-        }}
-        //наносим на канву наш изменённый путь
-          extraCanvas.drawPath(path, paint)
-
-        //наносим кружки на наш путь
-        if(isFigureDone){
-            scaledListPoints.forEach{
-                extraCanvas.drawCircle(it.x.toFloat(), it.y.toFloat(), circleRadius, paint)
-            }
-        }else{
-            listPoints.forEach{
-            extraCanvas.drawCircle(it.x.toFloat(), it.y.toFloat(), circleRadius, paint)
-            }
-        }
-
-      //рисую крейнюю точку для удаления
-            if(!isFigureDone){
-                val pCircle = Paint()
-                pCircle.color = Color.RED
-                extraCanvas.drawCircle(listPoints.last().x.toFloat(), listPoints.last().y.toFloat(), circleRadius-5, pCircle)
-                extraCanvas.drawLine(listPoints.last().x.toFloat()-15, listPoints.last().y.toFloat(),
-                        listPoints.last().x.toFloat()+15, listPoints.last().y.toFloat(), paint)
-            }
-
-        //выводим площадь и перметр
-        if(isFigureDone){
-            drawSquarePerimetr(listPoints)
-            editSide(motionTouchEventX, motionTouchEventY, scaledListPoints)
-        }
-        //рисуем длину отрезков
-        //todo надо или не надо рисовать округлённые значения , а точки сохранять во float , для большей точности при увеличении и уменьшении.
-        drawNumberLength()
-
-        //Это не первая точка черчежа
-        isFirstTouch = false
-
-        val str = StringBuilder()
-            listPoints.forEach{
-                str!!.append("[${it.x} , ${it.y} , dist ${it.distance}, mX ${it.middleX}, mY ${it.middleY}]")
-            }
-        Log.d("Log", str.toString())
-
-        val str1 = StringBuilder()
-        scaledListPoints.forEach{
-            str1!!.append("[${it.x} , ${it.y} , dist ${it.distance}, dist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
-        }
-        Log.d("Log", "*$str1")
-
-    }
 
     private fun drawNumberLength() {
         val p = Paint();
@@ -404,27 +412,6 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
     }
 
-    private fun calcStartPoint(it: MyPoint):FloatArray{
-       val startXY = FloatArray(2)
-        startXY[0] =(2 * it.middleX - it.x).toFloat()
-        startXY[1] =(2 * it.middleY - it.y).toFloat()
-        return startXY
-    }
-
-    //todo Need to change , для редактирования scaled
-    private fun calcNextPoint(listPoints: MutableList<MyPoint>, tan: FloatArray, dest: Float): MutableList<MyPoint> {
-        listPoints.last().mCos = roundOffDecimal(tan[0], "#").toFloat()
-        listPoints.last().mSin = roundOffDecimal(tan[1], "#").toFloat()
-
-        listPoints.last().x = (listPoints[listPoints.size - 2].x +  dest*listPoints.last().mCos).toInt()
-        listPoints.last().y = (listPoints[listPoints.size - 2].y +  dest*listPoints.last().mSin).toInt()
-        listPoints.last().distance = dest
-
-        listPoints.last().middleX = (listPoints[listPoints.size - 2].x +  (dest/2)*listPoints.last().mCos).toInt()
-        listPoints.last().middleY = (listPoints[listPoints.size - 2].y +  (dest/2)*listPoints.last().mSin).toInt()
-        return listPoints
-    }
-
     private fun calcAllNextPoints(editedListPoints: MutableList<MyPoint>,idPoint:Int, length: String): MutableList<MyPoint> {
 
         var lengthInt = 0
@@ -437,12 +424,21 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             motionTouchEventY = 0f
             return editedListPoints
         }
-        for(i in 0..editedListPoints.size){
+        for(i in 0 until editedListPoints.size){
+            if(editedListPoints[i].idPoint == idPoint){
+                val coefici = editedListPoints[i].realDistance/editedListPoints[i].distance
+                val realDistanceScaled = lengthInt*coefici
+                editedListPoints[i].distance = lengthInt.toFloat()
 
+                editedListPoints[i].x = (editedListPoints[i-1].x +  realDistanceScaled*editedListPoints[i].mCos).toInt()
+                editedListPoints[i].y = (editedListPoints[i-1].y +  realDistanceScaled*editedListPoints[i].mSin).toInt()
 
+                editedListPoints[i].realDistance = realDistanceScaled
 
-
+            }
         }
+        Log.d("log","$motionTouchEventX    $motionTouchEventY  8888888")
+
         return editedListPoints
 
 //        listPoints.last().mCos = roundOffDecimal(tan[0], "#").toFloat()
@@ -458,11 +454,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
 
-    private fun roundOffDecimal(number: Float, s: String): String {
-        val df = DecimalFormat(s)
-        df.roundingMode = RoundingMode.HALF_EVEN
-        return df.format(number)
-    }
+
     //здесь происходит начальная инициализация канваса
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
@@ -476,45 +468,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         super.onDraw(canvas)
         canvas.drawBitmap(extraBitmap, 0f, 0f, null)
     }
-    //Метод остался от рисования пальцем на канвасе
-    private fun touchMove() {
-        val dx = abs(motionTouchEventX - currentX)
-        val dy = abs(motionTouchEventY - currentY)
-        //Log.d("dff",touchTolerance.toString())
-//        if(dx >= touchTolerance|| dy >= touchTolerance){
-        if(dx >= 200 || dy >= 200){
-//            path.quadTo(currentX,currentY,(motionTouchEventX + currentX)/2
-//            ,(motionTouchEventY +currentY)/2)
-            path.lineTo(
-                    (motionTouchEventX + currentX) / 2, (motionTouchEventY + currentY) / 2
-            )
-            currentX = motionTouchEventX
-            currentY = motionTouchEventY
-            extraCanvas.drawPath(path, paint)
-        }
-        invalidate()
-    }
-    private fun calcDistance(x1: Int, y1: Int, x2: Int, y2: Int): Float {
-        val corx: Double = (x2-x1).toDouble()
-        val cory: Double = (y2-y1).toDouble()
-        return (sqrt(corx.pow(2) + cory.pow(2))).toFloat()
-    }
-//    function polygonArea(X, Y, numPoints)
-//    {
-//        area = 0;   // Accumulates area
-//        j = numPoints-1;
-//
-//        for (i=0; i<numPoints; i++)
-//        { area +=  (X[j]+X[i]) * (Y[j]-Y[i]);
-//            j = i;  //j is previous vertex to i
-//        }
-//        return area/2;
-//    }
 
-//    var xPts = [4,  4,  8,  8, -4,-4];
-//    var yPts = [6, -4, -4, -8, -8, 6];
-//    var a = polygonArea(xPts, yPts, 6);
-//    alert("Area  = " + a);
+
 
     private fun drawSquarePerimetr(listPoints: MutableList<MyPoint>) {
         val arrX = mutableListOf<Int>()
@@ -632,14 +587,15 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
     override fun onDialogPositiveClick(dist: String, idPoint: Int) {
       //  listPoints = recalculatePoints(dialog, idPoint)
-    //    scaledListPoints = recalculatePoints(dialog, idPoint)
+        //scaledListPoints = recalculatePoints(dialog, idPoint)
+//        motionTouchEventX = 0f
+//        motionTouchEventY = 0f
         scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint,dist)
 
         //метод отрисовки площади и периметра
-      //  drawSquarePerimetr(listPoints)
+   //    drawSquarePerimetr(scaledListPoints)
             touchDown()
-        motionTouchEventX = 0f
-        motionTouchEventY = 0f
+
             touchUp()
     }
 }

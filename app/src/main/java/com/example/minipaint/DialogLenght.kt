@@ -55,20 +55,20 @@ class DialogLenght(myCanvasView: MyCanvasView, editedPoint: MyPoint) : DialogFra
 //       val ed = view.findViewById<EditText>(R.id.needLenght)
 //        val imm: InputMethodManager = myCanvasView.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 //        imm.showSoftInput(ed, InputMethodManager.SHOW_IMPLICIT)
-        Log.d("log", "onViewCreated")
+      //  Log.d("log", "onViewCreated")
     }
 
     override fun onResume() {
         super.onResume()
 //        val imm = context?.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager?
 //        imm!!.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0)
-        Log.d("log", "${view?.findViewById<EditText>(R.id.needLenght)}")
+     //   Log.d("log", "${view?.findViewById<EditText>(R.id.needLenght)}")
        // view?.findViewById<EditText>(R.id.needLenght)
     }
 
     override fun onAttach(activity: Activity) {
         super.onAttach(activity)
-        Log.d("log", "onAttach")
+     //   Log.d("log", "onAttach")
         try{
             listener = myCanvasView as DialogLenghtListener
         }catch (e: ClassCastException){
