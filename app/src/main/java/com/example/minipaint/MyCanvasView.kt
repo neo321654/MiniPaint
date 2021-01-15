@@ -111,7 +111,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     private fun touchUp() {
-        Log.d("log","$motionTouchEventX     $motionTouchEventY   ")
+      //  Log.d("log","$motionTouchEventX     $motionTouchEventY   ")
         //если не начало и не конец чертежа добавляем точку в список
         if (!isFirstTouch && !isFigureDone) {
             counterPointId++
