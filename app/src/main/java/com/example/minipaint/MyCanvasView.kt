@@ -420,15 +420,30 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         for (i in 0 until editedListPoints.size) {
             if (editedListPoints[i].idPoint == idPoint) {
                 val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
-                val realDistanceScaled = lengthInt * coefici
+                var realDistanceScaled = lengthInt * coefici
                 editedListPoints[i].distance = lengthInt.toFloat()
 
                 editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
                 editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
 
                 editedListPoints[i].realDistance = realDistanceScaled
+            //меняю точки следующие за редактируемым отрезком
+                for(j in i until editedListPoints.size){
+                    realDistanceScaled = editedListPoints[j].distance * coefici
+                    editedListPoints[j].x = (editedListPoints[j - 1].x + realDistanceScaled * editedListPoints[j].mCos).toInt()
+                    editedListPoints[j].y = (editedListPoints[j - 1].y + realDistanceScaled * editedListPoints[j].mSin).toInt()
+
+                    editedListPoints[j].realDistance = realDistanceScaled
+                    //обрабатываю последний отрезок
+                    if(j == editedListPoints.size-1){
+                        editedListPoints[j].x = editedListPoints[0].x
+                        editedListPoints[j].y = editedListPoints[0].y
+                    }
+                }
 
             }
+
+
         }
         Log.d("log", "$motionTouchEventX    $motionTouchEventY  calcAllNextPoints")
 

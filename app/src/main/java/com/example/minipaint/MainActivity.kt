@@ -1,15 +1,12 @@
 package com.example.minipaint
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.widget.EditText
-import android.widget.Toast
-import androidx.fragment.app.DialogFragment
+import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var myCanvasView: MyCanvasView
-
+//заполняем экран канвасом
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -17,29 +14,18 @@ class MainActivity : AppCompatActivity() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             window.setDecorFitsSystemWindows(false)
         }
-       // myCanvasView.systemUiVisibility = SYSTEM_UI_FLAG_FULLSCREEN
-       // hideSystemUI()
+
         window.decorView.setOnSystemUiVisibilityChangeListener {
             hideSystemUI()
         }
         setContentView(myCanvasView)
     }
-
-
-
+//тут делаем полный экран
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-         hideSystemUI()
+        hideSystemUI()
     }
-//
-//    override fun onDialogPositiveClick(lenght: String) {
-//
-//        Toast.makeText(this,lenght,Toast.LENGTH_LONG).show()
-//    }
-//
-//    override fun onDialogNegativeClick(dialog: DialogFragment) {
-//        Toast.makeText(this,dialog.id.toString(),Toast.LENGTH_LONG).show()
-//    }
+//    полный экран
     private fun hideSystemUI() {
         // Enables regular immersive mode.
         // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
