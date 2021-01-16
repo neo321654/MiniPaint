@@ -54,13 +54,13 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     private val listenerForDetectorGesture = object : GestureDetector.SimpleOnGestureListener() {
         override fun onLongPress(e: MotionEvent?) {
             super.onLongPress(e)
-            scaleCanvas(true)
+            scaleCanvas(true,false)
             //   Toast.makeText(context, "h ${extraCanvas.height}; w${extraCanvas.width};", Toast.LENGTH_LONG).show()
         }
 
         override fun onDoubleTap(e: MotionEvent?): Boolean {
             super.onDoubleTap(e)
-            scaleCanvas(false)
+            scaleCanvas(false,false)
             return true
         }
 
@@ -250,7 +250,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     // Увеличение чертежа до краёв
-    private fun scaleCanvas(isScale: Boolean) {
+    private fun scaleCanvas(isScale: Boolean, isToEdge: Boolean) {
         //  extraCanvas.scale(0.9F, 0.9F)
         paint.color = Color.CYAN
         //    var pathRect = Path()
@@ -259,28 +259,32 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         //   val rectfDest = RectF()
         val matrix = Matrix()
         matrix.reset()
-        //10% on ширины девайса
-        // val bounds = (extraCanvas.width*0.1).toFloat()
-        //прямоугольник-рамка для вписания
-        // rectfDest.set(bounds, bounds, extraCanvas.width-bounds, extraCanvas.height-bounds)
-        //вычисление границ чертежа и присвоение этих границ прямоугольнику
-        // path.computeBounds(rectfBounds, true);
-        //матрица выполняющая вписание одного прямоугольника в другой
-        //matrix.setRectToRect(rectfBounds, rectfDest, Matrix.ScaleToFit.CENTER);
-        //попробую найти матрицу по краям чечежа и увеличить её
-        matrix.setRectToRect(rectfBounds, rectfBounds, Matrix.ScaleToFit.CENTER);
-        if (isScale) {
-            matrix.setScale(1.1F, 1.1F, scaledListPoints[1].x.toFloat(), scaledListPoints[1].y.toFloat())
-            path.transform(matrix, pathDest);
-        } else {
+        if(isToEdge){
+            //10% on ширины девайса
+             val bounds = (extraCanvas.width*0.1).toFloat()
+            //прямоугольник-рамка для вписания
 
-            matrix.setScale(0.91F, 0.91F, scaledListPoints[1].x.toFloat(), scaledListPoints[1].y.toFloat())
-            path.transform(matrix, pathDest);
-
-            //  path.transform(matrixIsFigureDone, pathDest);
-//            matrix.setConcat(matrix,matrixIsFigureDone)
-            // matrix.set(matrixIsFigureDone)
+            val rectfDest = RectF()
+            rectfDest.set(bounds, bounds, extraCanvas.width-bounds, extraCanvas.height-bounds)
+            //вычисление границ чертежа и присвоение этих границ прямоугольнику
+             path.computeBounds(rectfBounds, true);
+            //матрица выполняющая вписание одного прямоугольника в другой
+            matrix.setRectToRect(rectfBounds,rectfDest, Matrix.ScaleToFit.CENTER);
+        // попробую найти матрицу по краям чечежа и увеличить её
+        }else{
+            matrix.setRectToRect(rectfBounds, rectfBounds, Matrix.ScaleToFit.CENTER);
         }
+
+//        if (isScale) {
+//            matrix.setScale(1.1F, 1.1F, scaledListPoints[1].x.toFloat(), scaledListPoints[1].y.toFloat())
+//            path.transform(matrix, pathDest);
+//        } else {
+//            matrix.setScale(0.91F, 0.91F, scaledListPoints[1].x.toFloat(), scaledListPoints[1].y.toFloat())
+//            path.transform(matrix, pathDest);
+//        }
+        path.transform(matrix, pathDest);
+      //  extraCanvas.drawPath(path,paint)
+
         paint.color = Color.GREEN
         //здесь находим новые точки с помощью матрицы matrix.mapPoints()
         val arrF = FloatArray(scaledListPoints.size * 2)
@@ -293,7 +297,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
         //    Log.d("log",arrF.joinToString("          ;"))
         matrix.mapPoints(arrF)
-        //   Log.d("log",arrF.joinToString("          ;"))
+           Log.d("log",arrF.joinToString("          ;"))
         //   extraCanvas.drawPath(pathDest, paint)
         iter = 0
         //меняю ху на преобразованые из матрицы
@@ -358,6 +362,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             }
 
         }
+
     }
 
     //отображаем длинну отрезка
@@ -508,6 +513,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
         listPoints = calcAllNextPoints(listPoints, idPoint, dist)
 
+        //чтобы увеличить чертеж до краёв
+        scaleCanvas(true,true)
 
 
         touchDown()
