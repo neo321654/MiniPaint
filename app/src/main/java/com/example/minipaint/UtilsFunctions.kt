@@ -21,6 +21,7 @@ fun calcNextPoint(listPoints: MutableList<MyPoint>, tan: FloatArray, dest: Float
     listPoints.last().x = (listPoints[listPoints.size - 2].x + dest * listPoints.last().mCos).toInt()
     listPoints.last().y = (listPoints[listPoints.size - 2].y + dest * listPoints.last().mSin).toInt()
     listPoints.last().distance = dest
+    listPoints.last().realDistance = dest
 
     listPoints.last().middleX = (listPoints[listPoints.size - 2].x + (dest / 2) * listPoints.last().mCos).toInt()
     listPoints.last().middleY = (listPoints[listPoints.size - 2].y + (dest / 2) * listPoints.last().mSin).toInt()

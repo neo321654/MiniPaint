@@ -384,6 +384,10 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     val realDist = calcDistance(xy[0].toInt(), xy[1].toInt(), it.x, it.y)
                     it.realDistance = realDist
                     widthText = p.measureText(distStr);
+                    //увловие для последнего отрезка, беру значение не из увеличенного листа а из первого листа
+                    if(it.idPoint == scaledListPoints.size-1 ){
+                        distStr = roundOffDecimal(listPoints.last().distance,"#")
+                    }
                     extraCanvas.drawTextOnPath(distStr, path2, (realDist - widthText) / 2, -10F, p)
                     path2.reset()
                 }
@@ -422,9 +426,11 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
                 var realDistanceScaled = lengthInt * coefici
                 editedListPoints[i].distance = lengthInt.toFloat()
-
+//todo надо сделать редактирование начального листпоинта для правильного пересчёта площади
                 editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
                 editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
+                editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
+                editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
 
                 editedListPoints[i].realDistance = realDistanceScaled
             //меняю точки следующие за редактируемым отрезком
@@ -433,11 +439,22 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     editedListPoints[j].x = (editedListPoints[j - 1].x + realDistanceScaled * editedListPoints[j].mCos).toInt()
                     editedListPoints[j].y = (editedListPoints[j - 1].y + realDistanceScaled * editedListPoints[j].mSin).toInt()
 
+                    editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
+                    editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
+
                     editedListPoints[j].realDistance = realDistanceScaled
+                    editedListPoints[j].distance = realDistanceScaled/coefici
+
                     //обрабатываю последний отрезок
                     if(j == editedListPoints.size-1){
                         editedListPoints[j].x = editedListPoints[0].x
                         editedListPoints[j].y = editedListPoints[0].y
+                        editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
+                        editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
+                        editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x,editedListPoints[0].y,
+                                editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                        editedListPoints[j].distance = editedListPoints[j].realDistance/coefici
+
                     }
                 }
 
@@ -448,17 +465,6 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         Log.d("log", "$motionTouchEventX    $motionTouchEventY  calcAllNextPoints")
 
         return editedListPoints
-
-//        listPoints.last().mCos = roundOffDecimal(tan[0], "#").toFloat()
-//        listPoints.last().mSin = roundOffDecimal(tan[1], "#").toFloat()
-//
-//        listPoints.last().x = (listPoints[listPoints.size - 2].x +  dest*listPoints.last().mCos).toInt()
-//        listPoints.last().y = (listPoints[listPoints.size - 2].y +  dest*listPoints.last().mSin).toInt()
-//        listPoints.last().distance = dest
-//
-//        listPoints.last().middleX = (listPoints[listPoints.size - 2].x +  (dest/2)*listPoints.last().mCos).toInt()
-//        listPoints.last().middleY = (listPoints[listPoints.size - 2].y +  (dest/2)*listPoints.last().mSin).toInt()
-//        return listPoints
     }
 
     //отображаем площадь и периметр
@@ -500,6 +506,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         motionTouchEventX = 0f
         motionTouchEventY = 0f
         scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
+        listPoints = calcAllNextPoints(listPoints, idPoint, dist)
 
 
 
