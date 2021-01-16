@@ -1,4 +1,5 @@
 package com.example.minipaint
+
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
@@ -11,6 +12,7 @@ import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+
 private const val STROKE_WIDTH = 12f
 
 class MyCanvasView(context: Context, private val supportFragmentManager: FragmentManager) : View(context), DialogLenght.DialogLenghtListener {
@@ -111,7 +113,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     private fun touchUp() {
-      //  Log.d("log","$motionTouchEventX     $motionTouchEventY   ")
+        //  Log.d("log","$motionTouchEventX     $motionTouchEventY   ")
         //если не начало и не конец чертежа добавляем точку в список
         if (!isFirstTouch && !isFigureDone) {
             counterPointId++
@@ -126,7 +128,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                         it.x.toFloat(), it.y.toFloat()
                 )
             }
-        }else{
+        } else {
             listPoints.forEach {
                 path.lineTo(
                         it.x.toFloat(), it.y.toFloat()
@@ -334,7 +336,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             val h = calcDistance(listPointsEdited[i].middleX, listPointsEdited[i].middleY,
                     motionTouchEventX.toInt(), motionTouchEventY.toInt())
             //условие при котором мы сравниваем радиус точки касания с нашей серединой отрезка
-            if (circleRadiusEdit >= h && h!=0f) {
+            if (circleRadiusEdit >= h && h != 0f) {
 
                 //здесь мы каснёмся последнего отрезка и Тостуем
 //        if(listPointsEdited[i].idPoint == listPointsEdited.size-1){//TODO его надо редактировать чтобы точка смешалась редактируя последний угол,но не задивая последнюю длину
@@ -358,7 +360,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
     }
 
-
+    //отображаем длинну отрезка
     private fun drawNumberLength() {
         val p = Paint();
         p.strokeWidth = 4F;
@@ -402,6 +404,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
     }
 
+    //ищем все следующие точки , если фигура закончена
     private fun calcAllNextPoints(editedListPoints: MutableList<MyPoint>, idPoint: Int, length: String): MutableList<MyPoint> {
 
         var lengthInt = 0
@@ -443,6 +446,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 //        return listPoints
     }
 
+    //отображаем площадь и периметр
     private fun drawSquarePerimetr(listPoints: MutableList<MyPoint>) {
         val arrX = mutableListOf<Int>()
         val arrY = mutableListOf<Int>()
@@ -474,6 +478,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
     }
 
+    //ок в диалоге
     override fun onDialogPositiveClick(dist: String, idPoint: Int) {
         //  listPoints = recalculatePoints(dialog, idPoint)
         //scaledListPoints = recalculatePoints(dialog, idPoint)
@@ -483,11 +488,12 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
 
 
-         touchDown()
+        touchDown()
 
-         touchUp()
+        touchUp()
     }
 
+    //нет в диалоге
     override fun onDialogNegativeClick(dialog: DialogFragment) {
         //надо найти центр фигуры, и вычислить увеличение про прямоугольнику вписанной фигуры
         //  extraCanvas.scale(0.3f,0.3f, 400f,400f)
@@ -502,6 +508,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         extraCanvas.drawColor(backgroundColor)
     }
 
+    //перерисовка
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawBitmap(extraBitmap, 0f, 0f, null)
