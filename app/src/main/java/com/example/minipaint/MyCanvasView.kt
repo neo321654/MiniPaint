@@ -13,7 +13,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 
-private const val STROKE_WIDTH = 12f
+private const val STROKE_WIDTH = 6f
 
 class MyCanvasView(context: Context, private val supportFragmentManager: FragmentManager) : View(context), DialogLenght.DialogLenghtListener {
 
@@ -24,6 +24,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     private val textSize = 40f
     private var isFigureDone = false
     private var counterPointId = 0
+
     private val drawColor = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
     private lateinit var extraCanvas: Canvas
     private lateinit var extraBitmap: Bitmap
@@ -480,7 +481,9 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             scaledListPoints.forEach {
                 //проверяю что это не первая точка
                 if (it.middleX != 0 && it.middleY != 0 && it.idPoint != 0) {
-                    distStr = (it.distance.toInt()).toString()
+
+                    //подменяю длину из начального листа
+                    distStr = (roundOffDecimal(listPoints[it.idPoint].distance,"#"))
                     val xy = calcStartPoint(it)
                     path2.moveTo(xy[0], xy[1])
                     path2.lineTo(it.x.toFloat(), it.y.toFloat())
@@ -544,6 +547,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         var lengthInt = 0
         //todo эту обработку надо сделать в самом диалоге, чтобы не бесить юзера
+
         try {
             lengthInt = length.toInt()
         } catch (e: NumberFormatException) {
@@ -552,18 +556,19 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             motionTouchEventY = 0f
             return editedListPoints
         }
+
         for (i in 0 until editedListPoints.size) {
             if (editedListPoints[i].idPoint == idPoint) {
                 val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
                 var realDistanceScaled = lengthInt * coefici
                 editedListPoints[i].distance = lengthInt.toFloat()
-//todo надо сделать редактирование начального листпоинта для правильного пересчёта площади
                 editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
                 editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
                 editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
                 editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
 
                 editedListPoints[i].realDistance = realDistanceScaled
+                //todo надо пробижаться с изменениями не только вперед но и назад , если редактировать размеры не по часовой пропорции все ломаются
             //меняю точки следующие за редактируемым отрезком
                 for(j in i until editedListPoints.size){
                     realDistanceScaled = editedListPoints[j].distance * coefici
@@ -593,7 +598,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
 
         }
-        Log.d("log", "$motionTouchEventX    $motionTouchEventY  calcAllNextPoints")
+
 
         return editedListPoints
     }
@@ -644,7 +649,6 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         scaleCanvasTest()
         touchDown()
-
         touchUp()
     }
 
