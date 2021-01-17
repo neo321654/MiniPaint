@@ -55,8 +55,12 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         override fun onLongPress(e: MotionEvent?) {
             super.onLongPress(e)
          //   scaleCanvas(true,false)
-            scaleCanvasTest()
-            //   Toast.makeText(context, "h ${extraCanvas.height}; w${extraCanvas.width};", Toast.LENGTH_LONG).show()
+
+          //  scaleCanvasTest()
+//            touchDown()
+//
+//            touchUp()
+               Toast.makeText(context, "h ${extraCanvas.height}; w${extraCanvas.width};", Toast.LENGTH_LONG).show()
         }
 
         override fun onDoubleTap(e: MotionEvent?): Boolean {
@@ -74,9 +78,17 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     private fun scaleCanvasTest() {
 
         //  extraCanvas.scale(0.9F, 0.9F)
-        paint.color = Color.CYAN
+       // paint.color = Color.CYAN
         //    var pathRect = Path()
         val pathDest = Path()
+        scaledListPoints.forEach{
+           if(it.idPoint == 0){
+               pathDest.moveTo(it.x.toFloat(),it.y.toFloat())
+           }else{
+               pathDest.lineTo(it.x.toFloat(),it.y.toFloat())
+           }
+
+        }
         val rectfBounds = RectF()
         //   val rectfDest = RectF()
         val matrix = Matrix()
@@ -87,17 +99,19 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             //прямоугольник-рамка для вписания
 
             val rectfDest = RectF()
-            rectfDest.set(bounds, bounds, extraCanvas.width-bounds, extraCanvas.height-bounds)
+            rectfDest.set(bounds, bounds*2, extraCanvas.width-bounds, extraCanvas.height-bounds)
             //вычисление границ чертежа и присвоение этих границ прямоугольнику
-            path.computeBounds(rectfBounds, true);
+        pathDest.computeBounds(rectfBounds, true);
             //матрица выполняющая вписание одного прямоугольника в другой
             matrix.setRectToRect(rectfBounds,rectfDest, Matrix.ScaleToFit.CENTER);
             // попробую найти матрицу по краям чечежа и увеличить её
      //   }else{
-            matrix.setRectToRect(rectfBounds, rectfBounds, Matrix.ScaleToFit.CENTER);
+           // matrix.setRectToRect(rectfBounds, rectfBounds, Matrix.ScaleToFit.CENTER);
      //   }
-        extraCanvas.drawRect(rectfDest,paint)
-        extraCanvas.drawRect(rectfBounds,paint)
+     //   path.transform(matrix)
+    //    extraCanvas.drawPath(path,paint)
+//        extraCanvas.drawRect(rectfDest,paint)
+//        extraCanvas.drawRect(rectfBounds,paint)
 
 //        if (isScale) {
 //            matrix.setScale(1.1F, 1.1F, scaledListPoints[1].x.toFloat(), scaledListPoints[1].y.toFloat())
@@ -106,10 +120,10 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 //            matrix.setScale(0.91F, 0.91F, scaledListPoints[1].x.toFloat(), scaledListPoints[1].y.toFloat())
 //            path.transform(matrix, pathDest);
 //        }
-        path.transform(matrix, pathDest);
+    //    path.transform(matrix, pathDest);
         //  extraCanvas.drawPath(path,paint)
 
-        paint.color = Color.GREEN
+     //   paint.color = Color.GREEN
         //здесь находим новые точки с помощью матрицы matrix.mapPoints()
         val arrF = FloatArray(scaledListPoints.size * 2)
         var iter = 0
@@ -143,6 +157,9 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             }
             lastP = it
         }
+
+//        touchDown()
+//        touchUp()
     }
 
     //   private val detector: GestureDetector = GestureDetector(context,myListener)
@@ -150,6 +167,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
+
         motionTouchEventX = event.x
         motionTouchEventY = event.y
         //заменил обработчик событий на детектор жестов
@@ -307,7 +325,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         //todo надо или не надо рисовать округлённые значения , а точки сохранять во float , для большей точности при увеличении и уменьшении.
         drawNumberLength()
 
-        scaleCanvasTest()
+    //    scaleCanvasTest()
         //Это не первая точка черчежа
         isFirstTouch = false
 
@@ -590,9 +608,9 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         listPoints = calcAllNextPoints(listPoints, idPoint, dist)
 
         //чтобы увеличить чертеж до краёв
-        scaleCanvas(true,true)
+     //   scaleCanvas(true,true)
 
-
+        scaleCanvasTest()
         touchDown()
 
         touchUp()
