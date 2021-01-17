@@ -21,6 +21,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     private var scaledListPoints: MutableList<MyPoint> = mutableListOf()
     private val matrixIsFigureDone = Matrix()
     private val circleRadius = 30f
+    private val textSize = 40f
     private var isFigureDone = false
     private var counterPointId = 0
     private val drawColor = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
@@ -459,13 +460,17 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
     }
 
+
+
     //отображаем длинну отрезка
     private fun drawNumberLength() {
         val p = Paint();
         p.strokeWidth = 4F;
         p.style = Paint.Style.FILL;
-        p.textSize = 40f
-        p.color = Color.BLACK
+        p.strokeJoin = Paint.Join.ROUND
+        p.strokeCap = Paint.Cap.ROUND
+        p.textSize = textSize
+        p.color = drawColor
 
         val path2 = Path()
         var widthText = 0f;
@@ -480,6 +485,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     path2.moveTo(xy[0], xy[1])
                     path2.lineTo(it.x.toFloat(), it.y.toFloat())
 
+
                     val realDist = calcDistance(xy[0].toInt(), xy[1].toInt(), it.x, it.y)
                     it.realDistance = realDist
                     widthText = p.measureText(distStr);
@@ -487,7 +493,21 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     if(it.idPoint == scaledListPoints.size-1 ){
                         distStr = roundOffDecimal(listPoints.last().distance,"#")
                     }
-                    extraCanvas.drawTextOnPath(distStr, path2, (realDist - widthText) / 2, -10F, p)
+                  //  extraCanvas.drawTextOnPath(distStr, path2, (realDist - widthText) / 2, -10F, p)
+                    p.color= drawColor
+
+
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                        extraCanvas.drawRoundRect(it.middleX.toFloat()-widthText/2,it.middleY.toFloat()+textSize/2,
+                                it.middleX.toFloat()+widthText/2,it.middleY-textSize/2,8f,8f,p)
+                    }else{
+                        extraCanvas.drawRect(it.middleX.toFloat()-widthText/2,it.middleY.toFloat()+textSize/2,
+                                it.middleX.toFloat()+widthText/2,it.middleY-textSize/2,p)
+                    }
+
+                    p.color= Color.BLACK
+                    extraCanvas.drawText(distStr,it.middleX.toFloat()-(widthText/2),it.middleY+(textSize/2-STROKE_WIDTH/2),p)
+
                     path2.reset()
                 }
             }
@@ -500,7 +520,19 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     path2.moveTo(xy[0], xy[1])
                     path2.lineTo(it.x.toFloat(), it.y.toFloat())
                     widthText = p.measureText(distStr);
-                    extraCanvas.drawTextOnPath(distStr, path2, (it.distance.toInt() - widthText) / 2, -10F, p)
+                    p.color= drawColor
+
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                        extraCanvas.drawRoundRect(it.middleX.toFloat()-widthText/2,it.middleY.toFloat()+textSize/2,
+                                it.middleX.toFloat()+widthText/2,it.middleY-textSize/2,8f,8f,p)
+                    }else{
+                        extraCanvas.drawRect(it.middleX.toFloat()-widthText/2,it.middleY.toFloat()+textSize/2,
+                                it.middleX.toFloat()+widthText/2,it.middleY-textSize/2,p)
+                    }
+                    p.color= Color.BLACK
+
+                    extraCanvas.drawText(distStr,it.middleX.toFloat()-(widthText/2),it.middleY+(textSize/2-STROKE_WIDTH/2),p)
+                  //  extraCanvas.drawTextOnPath(distStr, path2, (it.distance.toInt() - widthText) / 2, -10F, p)
                     path2.reset()
                 }
             }
