@@ -532,8 +532,22 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
                 editedListPoints[i].realDistance = realDistanceScaled
                 //todo надо пробижаться с изменениями не только вперед но и назад , если редактировать размеры не по часовой пропорции все ломаются
+                //меняю точки до вниз до первой точки
+//                for(k in i ..0){
+//                    realDistanceScaled = editedListPoints[k].distance * coefici
+//                    editedListPoints[k].x = (editedListPoints[k - 1].x + realDistanceScaled * editedListPoints[k].mCos).toInt()
+//                    editedListPoints[k].y = (editedListPoints[k - 1].y + realDistanceScaled * editedListPoints[k].mSin).toInt()
+//
+//                    editedListPoints[k].middleX = (editedListPoints[k].x + editedListPoints[k - 1].x)/2
+//                    editedListPoints[k].middleY = (editedListPoints[k].y + editedListPoints[k - 1].y)/2
+//
+//                    editedListPoints[k].realDistance = realDistanceScaled
+//                    editedListPoints[k].distance = realDistanceScaled/coefici
+//                }
+
+
             //меняю точки следующие за редактируемым отрезком
-                for(j in i until editedListPoints.size){
+                for(j in 1 until editedListPoints.size){
                     realDistanceScaled = editedListPoints[j].distance * coefici
                     editedListPoints[j].x = (editedListPoints[j - 1].x + realDistanceScaled * editedListPoints[j].mCos).toInt()
                     editedListPoints[j].y = (editedListPoints[j - 1].y + realDistanceScaled * editedListPoints[j].mSin).toInt()
