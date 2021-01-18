@@ -554,9 +554,15 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
                     editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
                     editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
+//todo ошибка по диагонали неправильно пересчитывается, не вводится моё значение вероятно надо как то привязаться к id редактированного отрезка
+                    editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
+                            editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                    editedListPoints[j].distance = editedListPoints[j].realDistance/coefici
 
-                    editedListPoints[j].realDistance = realDistanceScaled
-                    editedListPoints[j].distance = realDistanceScaled/coefici
+
+
+//                    editedListPoints[j].realDistance = realDistanceScaled
+//                    editedListPoints[j].distance = realDistanceScaled/coefici
 
                     //обрабатываю последний отрезок
                     if(j == editedListPoints.size-1){
@@ -621,7 +627,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
         listPoints = calcAllNextPoints(listPoints, idPoint, dist)
 
-        scaleCanvasTest()
+      //  scaleCanvasTest()
         touchDown()
         touchUp()
     }
