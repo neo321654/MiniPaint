@@ -24,6 +24,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     private val textSize = 40f
     private var isFigureDone = false
     private var counterPointId = 0
+    private val circleRadiusForEdit = 50
 
     private val drawColor = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
     private lateinit var extraCanvas: Canvas
@@ -78,10 +79,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     private fun scaleCanvasTest() {
-
-        //  extraCanvas.scale(0.9F, 0.9F)
-       // paint.color = Color.CYAN
-        //    var pathRect = Path()
+        //прорисовываю путь с известными точками т.к. он теряется в определённые моменты
         val pathDest = Path()
         scaledListPoints.forEach{
            if(it.idPoint == 0){
@@ -91,41 +89,19 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
            }
 
         }
+
         val rectfBounds = RectF()
-        //   val rectfDest = RectF()
         val matrix = Matrix()
         matrix.reset()
-       // if(isToEdge){
-            //10% on ширины девайса
+
             val bounds = (extraCanvas.width*0.1).toFloat()
             //прямоугольник-рамка для вписания
-
             val rectfDest = RectF()
             rectfDest.set(bounds, bounds*2, extraCanvas.width-bounds, extraCanvas.height-bounds)
             //вычисление границ чертежа и присвоение этих границ прямоугольнику
-        pathDest.computeBounds(rectfBounds, true);
-            //матрица выполняющая вписание одного прямоугольника в другой
+           pathDest.computeBounds(rectfBounds, true);
+        //матрица выполняющая вписание одного прямоугольника в другой
             matrix.setRectToRect(rectfBounds,rectfDest, Matrix.ScaleToFit.CENTER);
-            // попробую найти матрицу по краям чечежа и увеличить её
-     //   }else{
-           // matrix.setRectToRect(rectfBounds, rectfBounds, Matrix.ScaleToFit.CENTER);
-     //   }
-     //   path.transform(matrix)
-    //    extraCanvas.drawPath(path,paint)
-//        extraCanvas.drawRect(rectfDest,paint)
-//        extraCanvas.drawRect(rectfBounds,paint)
-
-//        if (isScale) {
-//            matrix.setScale(1.1F, 1.1F, scaledListPoints[1].x.toFloat(), scaledListPoints[1].y.toFloat())
-//            path.transform(matrix, pathDest);
-//        } else {
-//            matrix.setScale(0.91F, 0.91F, scaledListPoints[1].x.toFloat(), scaledListPoints[1].y.toFloat())
-//            path.transform(matrix, pathDest);
-//        }
-    //    path.transform(matrix, pathDest);
-        //  extraCanvas.drawPath(path,paint)
-
-     //   paint.color = Color.GREEN
         //здесь находим новые точки с помощью матрицы matrix.mapPoints()
         val arrF = FloatArray(scaledListPoints.size * 2)
         var iter = 0
@@ -135,10 +111,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             arrF[iter] = it.y.toFloat()
             iter++
         }
-        //    Log.d("log",arrF.joinToString("          ;"))
+        //вычисление преобразованных точек за счёт матрицы
         matrix.mapPoints(arrF)
-      //  Log.d("log",arrF.joinToString("          ;"))
-        //   extraCanvas.drawPath(pathDest, paint)
         iter = 0
         //меняю ху на преобразованые из матрицы
         scaledListPoints.forEach {
@@ -148,20 +122,15 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             iter++
         }
 
-        //     listPoints.last().middleX = (listPoints[listPoints.size - 2].x +  (dest/2)*listPoints.last().mCos).toInt()
         var lastP = MyPoint(0, 0)
         //меняем средниные точки для изменённых
         scaledListPoints.forEach {
             if (it.idPoint != 0) {
                 it.middleX = (lastP.x + it.x) / 2
                 it.middleY = (lastP.y + it.y) / 2
-                //  it.distance = calcDistance(lastP.x,lastP.y,it.x,it.y)
             }
             lastP = it
         }
-
-//        touchDown()
-//        touchUp()
     }
 
     //   private val detector: GestureDetector = GestureDetector(context,myListener)
@@ -430,14 +399,12 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             strokeWidth = STROKE_WIDTH
         }
         val pathEdit = Path()
-        // для нажатия выберем середину отрезка с таким радиусом
-        val circleRadiusEdit = 50
+
         for (i in 0 until listPointsEdited.size) {
             val h = calcDistance(listPointsEdited[i].middleX, listPointsEdited[i].middleY,
                     motionTouchEventX.toInt(), motionTouchEventY.toInt())
             //условие при котором мы сравниваем радиус точки касания с нашей серединой отрезка
-            if (circleRadiusEdit >= h && h != 0f) {
-
+            if (circleRadiusForEdit >= h && h != 0f) {
                 //здесь мы каснёмся последнего отрезка и Тостуем
 //        if(listPointsEdited[i].idPoint == listPointsEdited.size-1){//TODO его надо редактировать чтобы точка смешалась редактируя последний угол,но не задивая последнюю длину
 //        Toast.makeText(context, R.string.lastDistance, Toast.LENGTH_LONG).show()
@@ -450,18 +417,14 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 extraCanvas.drawPath(pathEdit, paintEdit)
                 //показываю диалог для ввода ширины
                 //todo() заменить диалог на активити с холо темой .т.к. в не могу сразу показать клаву для эдит текста
-
                 val dialogLength = DialogLenght(this, listPointsEdited[i])
                 dialogLength.show(supportFragmentManager, "missiles")
-
                 break
             }
 
         }
 
     }
-
-
 
     //отображаем длинну отрезка
     private fun drawNumberLength() {
@@ -637,15 +600,12 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
     //ок в диалоге
     override fun onDialogPositiveClick(dist: String, idPoint: Int) {
-        //  listPoints = recalculatePoints(dialog, idPoint)
-        //scaledListPoints = recalculatePoints(dialog, idPoint)
+      //чтобы не было повторного нажатия диалога
         motionTouchEventX = 0f
         motionTouchEventY = 0f
+
         scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
         listPoints = calcAllNextPoints(listPoints, idPoint, dist)
-
-        //чтобы увеличить чертеж до краёв
-     //   scaleCanvas(true,true)
 
         scaleCanvasTest()
         touchDown()
