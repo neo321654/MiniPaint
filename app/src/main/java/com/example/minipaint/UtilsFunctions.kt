@@ -41,12 +41,11 @@ fun calcNextPoint(listPoints: MutableList<MyPoint>, tan: FloatArray, dest: Float
     else{
         cosEdited = roundOffDecimal(cosEdited,"#").toFloat()
     }
-
-    Log.d("log", "sin = ${sinEdited}")
-    Log.d("log", "cos = ${cosEdited}")
-
+//    Log.d("log", "sin = ${sinEdited}")
+//    Log.d("log", "cos = ${cosEdited}")
+    listPoints.last().mSin = sinEdited
+    listPoints.last().mCos = cosEdited
     listPoints.last().x = (listPoints[listPoints.size - 2].x + dest * cosEdited).toInt()
-
     listPoints.last().y = (listPoints[listPoints.size - 2].y + dest * sinEdited).toInt()
     listPoints.last().distance = dest
     listPoints.last().realDistance = dest
@@ -62,14 +61,13 @@ fun roundOffDecimal(number: Float, s: String): String {
     df.roundingMode = RoundingMode.HALF_EVEN
     return df.format(number)
 }
+
 fun round(number: Float, scale: Int): Float {
     var pow = 10f
     for (i in 1 until scale) pow *= 10
     val tmp = number * pow
     return ((if (tmp - tmp.toInt() >= 0.5f) tmp + 1 else tmp).toInt()).toFloat() / pow
 }
-
-
 
 //расчёт растояния от одной точки до другой
 fun calcDistance(x1: Int, y1: Int, x2: Int, y2: Int): Float {

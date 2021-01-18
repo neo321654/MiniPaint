@@ -627,7 +627,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
         listPoints = calcAllNextPoints(listPoints, idPoint, dist)
 
-      //  scaleCanvasTest()
+        scaleCanvasTest()
         touchDown()
         touchUp()
     }
