@@ -230,13 +230,15 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 listPoints.last().middleY = (listPoints.get(listPoints.size - 2).y + listPoints[0].y) / 2
                 //Пересчитываю последнюю длину с учетом изменений
                 listPoints.last().distance = calcDistance(listPoints.get(listPoints.size - 2).x, listPoints.get(listPoints.size - 2).y, listPoints.last().x, listPoints.last().y)
+
                 isFigureDone = true
-                // назначаю увеличеные точки для маштабов
+//                // назначаю увеличеные точки для маштабов
                 listPoints.forEach {
                     //копирую дата объекты что бы не было проблем с ссылками
                     scaledListPoints.add(it.copy())
                 }
             }
+
             //меняем последнюю точку пути в path на нашу расчитанную
             path.setLastPoint(listPoints.last().x.toFloat(), listPoints.last().y.toFloat())
 
@@ -251,6 +253,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 //   Toast.makeText(context,"Last point",Toast.LENGTH_SHORT).show()
                 listPoints.removeAt(listPoints.size - 1)
                 listPoints.removeAt(listPoints.size - 1)
+                counterPointId--
+                counterPointId--
                 path.reset()
                 path.moveTo(listPoints[0].x.toFloat(), listPoints[0].y.toFloat())
                 listPoints.forEach {
@@ -300,17 +304,17 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         //Это не первая точка черчежа
         isFirstTouch = false
 
-//        val str = StringBuilder()
-//            listPoints.forEach{
-//                str!!.append("[${it.x} , ${it.y} , dist ${it.distance}, mX ${it.middleX}, mY ${it.middleY}]")
-//            }
-//        Log.d("Log", str.toString())
-//
-//        val str1 = StringBuilder()
-//        scaledListPoints.forEach{
-//            str1!!.append("[${it.x} , ${it.y} , dist ${it.distance}, dist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
-//        }
-//        Log.d("Log", "*$str1")
+        val str = StringBuilder()
+            listPoints.forEach{
+                str!!.append("[idPoint = ${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance},realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
+            }
+        Log.d("Log", str.toString())
+
+        val str1 = StringBuilder()
+        scaledListPoints.forEach{
+            str1!!.append("*[idPoint =${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance}, realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
+        }
+        Log.d("Log", "$str1")
 
     }
 
@@ -441,12 +445,16 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         var distStr = ""
 
         if (isFigureDone) {
+
+
             scaledListPoints.forEach {
                 //проверяю что это не первая точка
                 if (it.middleX != 0 && it.middleY != 0 && it.idPoint != 0) {
 
                     //подменяю длину из начального листа
                     distStr = (roundOffDecimal(listPoints[it.idPoint].distance,"#"))
+                 //   distStr = (roundOffDecimal(it.distance,"#"))
+
                     val xy = calcStartPoint(it)
                     path2.moveTo(xy[0], xy[1])
                     path2.lineTo(it.x.toFloat(), it.y.toFloat())
