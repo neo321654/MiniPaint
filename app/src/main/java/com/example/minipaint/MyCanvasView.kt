@@ -541,25 +541,29 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     var realDistanceScaled = lengthInt * coefici
 
 
-                    var coefForMashtaba =lengthInt/editedListPoints[i].realDistance//todo разобраться почему надо умножать
+                    var coefForMashtaba =lengthInt/editedListPoints[i].realDistance
                     Log.d("log","lengthInt   $lengthInt ")
                     Log.d("log","editedListPoints[i].realDistance   ${editedListPoints[i].realDistance} ")
                     Log.d("log","111111   $coefForMashtaba ")
-
+//todo надо изменить эту логику т.к. есть проблема если редактировать не первый отрезок
                     editedListPoints[i].distance = lengthInt.toFloat()
-                    editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
-                    editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
-                    editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
-                    editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
-
-                    editedListPoints[i].realDistance = realDistanceScaled
+//                    editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
+//                    editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
+//                    editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
+//                    editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
+//
+//                    editedListPoints[i].realDistance = realDistanceScaled
 
                     //меняю точки следующие за редактируемым отрезком
                     for(j in 1 until editedListPoints.size){
                         //выбрасвваю если то же id что и редактируемое
-                        if(editedListPoints[j].idPoint ==idPoint) continue
+                        if(editedListPoints[j].idPoint ==idPoint) {
+                            realDistanceScaled = editedListPoints[j].distance
+                        }else{
+                            realDistanceScaled = editedListPoints[j].distance * coefForMashtaba
+                        }
 
-                        realDistanceScaled = editedListPoints[j].distance * coefForMashtaba
+
                         editedListPoints[j].x = (editedListPoints[j - 1].x + realDistanceScaled * editedListPoints[j].mCos).toInt()
                         editedListPoints[j].y = (editedListPoints[j - 1].y + realDistanceScaled * editedListPoints[j].mSin).toInt()
 
@@ -572,7 +576,14 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                         Log.d("log","222222   ${editedListPoints[j].distance} ")
                         Log.d("log","22222222   $coefForMashtaba ")
 
-                        editedListPoints[j].distance = editedListPoints[j].distance*coefForMashtaba
+
+                        if(editedListPoints[j].idPoint ==idPoint) {
+                            editedListPoints[j].distance = editedListPoints[j].distance
+                        }else{
+                            editedListPoints[j].distance = editedListPoints[j].distance*coefForMashtaba
+                        }
+
+
 
                         Log.d("log","333333   ${editedListPoints[j].distance} ")
                         Log.d("log","333333   ${editedListPoints[j].distance*coefForMashtaba} ")
