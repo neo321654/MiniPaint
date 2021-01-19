@@ -25,6 +25,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     private var isFigureDone = false
     private var counterPointId = 0
     private val circleRadiusForEdit = 50
+    private var isFirstEditForScale = true
 
     private val drawColor = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
     private lateinit var extraCanvas: Canvas
@@ -515,7 +516,6 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
     //ищем все следующие точки , если фигура закончена
     private fun calcAllNextPoints(editedListPoints: MutableList<MyPoint>, idPoint: Int, length: String): MutableList<MyPoint> {
-
         var lengthInt = 0
         //todo эту обработку надо сделать в самом диалоге, чтобы не бесить юзера
 
@@ -528,67 +528,121 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             return editedListPoints
         }
 
-        for (i in 0 until editedListPoints.size) {
-            if (editedListPoints[i].idPoint == idPoint) {
-                val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
-                var realDistanceScaled = lengthInt * coefici
-                editedListPoints[i].distance = lengthInt.toFloat()
-                editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
-                editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
-                editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
-                editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
+        //условие если первая коректировка длины
+        if(isFirstEditForScale){
 
-                editedListPoints[i].realDistance = realDistanceScaled
-                //todo надо пробижаться с изменениями не только вперед но и назад , если редактировать размеры не по часовой пропорции все ломаются
-                //меняю точки до вниз до первой точки
-//                for(k in i ..0){
-//                    realDistanceScaled = editedListPoints[k].distance * coefici
-//                    editedListPoints[k].x = (editedListPoints[k - 1].x + realDistanceScaled * editedListPoints[k].mCos).toInt()
-//                    editedListPoints[k].y = (editedListPoints[k - 1].y + realDistanceScaled * editedListPoints[k].mSin).toInt()
-//
-//                    editedListPoints[k].middleX = (editedListPoints[k].x + editedListPoints[k - 1].x)/2
-//                    editedListPoints[k].middleY = (editedListPoints[k].y + editedListPoints[k - 1].y)/2
-//
-//                    editedListPoints[k].realDistance = realDistanceScaled
-//                    editedListPoints[k].distance = realDistanceScaled/coefici
-//                }
+            for (i in 0 until editedListPoints.size) {
+                if (editedListPoints[i].idPoint == idPoint) {
+
+//                    val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
+
+                    val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
+
+                    var realDistanceScaled = lengthInt * coefici
 
 
-            //меняю точки следующие за редактируемым отрезком
-                for(j in 1 until editedListPoints.size){
-                    realDistanceScaled = editedListPoints[j].distance * coefici
-                    editedListPoints[j].x = (editedListPoints[j - 1].x + realDistanceScaled * editedListPoints[j].mCos).toInt()
-                    editedListPoints[j].y = (editedListPoints[j - 1].y + realDistanceScaled * editedListPoints[j].mSin).toInt()
+                    var coefForMashtaba =lengthInt/editedListPoints[i].realDistance//todo разобраться почему надо умножать
+                    Log.d("log","lengthInt   $lengthInt ")
+                    Log.d("log","editedListPoints[i].realDistance   ${editedListPoints[i].realDistance} ")
+                    Log.d("log","111111   $coefForMashtaba ")
 
-                    editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
-                    editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
-//todo ошибка по диагонали неправильно пересчитывается, не вводится моё значение вероятно надо как то привязаться к id редактированного отрезка
-                    editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
-                            editedListPoints[j - 1].x,editedListPoints[j - 1].y)
-                    editedListPoints[j].distance = editedListPoints[j].realDistance/coefici
+                    editedListPoints[i].distance = lengthInt.toFloat()
+                    editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
+                    editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
+                    editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
+                    editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
 
+                    editedListPoints[i].realDistance = realDistanceScaled
 
+                    //меняю точки следующие за редактируемым отрезком
+                    for(j in 1 until editedListPoints.size){
+                        //выбрасвваю если то же id что и редактируемое
+                        if(editedListPoints[j].idPoint ==idPoint) continue
 
-//                    editedListPoints[j].realDistance = realDistanceScaled
-//                    editedListPoints[j].distance = realDistanceScaled/coefici
+                        realDistanceScaled = editedListPoints[j].distance * coefForMashtaba
+                        editedListPoints[j].x = (editedListPoints[j - 1].x + realDistanceScaled * editedListPoints[j].mCos).toInt()
+                        editedListPoints[j].y = (editedListPoints[j - 1].y + realDistanceScaled * editedListPoints[j].mSin).toInt()
 
-                    //обрабатываю последний отрезок
-                    if(j == editedListPoints.size-1){
-                        editedListPoints[j].x = editedListPoints[0].x
-                        editedListPoints[j].y = editedListPoints[0].y
                         editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
                         editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
-                        editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x,editedListPoints[0].y,
+//todo ошибка по диагонали неправильно пересчитывается, не вводится моё значение вероятно надо как то привязаться к id редактированного отрезка
+                        editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
+                                editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+
+                        Log.d("log","222222   ${editedListPoints[j].distance} ")
+                        Log.d("log","22222222   $coefForMashtaba ")
+
+                        editedListPoints[j].distance = editedListPoints[j].distance*coefForMashtaba
+
+                        Log.d("log","333333   ${editedListPoints[j].distance} ")
+                        Log.d("log","333333   ${editedListPoints[j].distance*coefForMashtaba} ")
+
+                        //последний отрезок
+                        if(j == editedListPoints.size-1){
+                            editedListPoints[j].x = editedListPoints[0].x
+                            editedListPoints[j].y = editedListPoints[0].y
+                            editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
+                            editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
+                            editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x,editedListPoints[0].y,
+                                    editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                            editedListPoints[j].distance = editedListPoints[j].realDistance/coefici
+
+                        }
+                    }
+                }
+            }
+            isFirstEditForScale = false
+        }else{
+
+            for (i in 0 until editedListPoints.size) {
+
+                if (editedListPoints[i].idPoint == idPoint) {
+
+                    val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
+                    var realDistanceScaled = lengthInt * coefici
+
+                    editedListPoints[i].distance = lengthInt.toFloat()
+                    editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
+                    editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
+                    editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
+                    editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
+
+                    editedListPoints[i].realDistance = realDistanceScaled
+                    //todo надо пробижаться с изменениями не только вперед но и назад , если редактировать размеры не по часовой пропорции все ломаются
+                    //меняю точки следующие за редактируемым отрезком
+                    for(j in 1 until editedListPoints.size){
+
+                        realDistanceScaled = editedListPoints[j].distance * coefici
+                        editedListPoints[j].x = (editedListPoints[j - 1].x + realDistanceScaled * editedListPoints[j].mCos).toInt()
+                        editedListPoints[j].y = (editedListPoints[j - 1].y + realDistanceScaled * editedListPoints[j].mSin).toInt()
+
+                        editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
+                        editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
+//todo ошибка по диагонали неправильно пересчитывается, не вводится моё значение вероятно надо как то привязаться к id редактированного отрезка
+                        editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
                                 editedListPoints[j - 1].x,editedListPoints[j - 1].y)
                         editedListPoints[j].distance = editedListPoints[j].realDistance/coefici
 
-                    }
-                }
+                        if(j == editedListPoints.size-1){
+                            editedListPoints[j].x = editedListPoints[0].x
+                            editedListPoints[j].y = editedListPoints[0].y
+                            editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
+                            editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
+                            editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x,editedListPoints[0].y,
+                                    editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                            editedListPoints[j].distance = editedListPoints[j].realDistance/coefici
 
+                        }
+                    }
+
+
+                }
             }
 
-
         }
+
+
+
 
 
         return editedListPoints
@@ -632,8 +686,16 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         motionTouchEventX = 0f
         motionTouchEventY = 0f
 
-        scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
-        listPoints = calcAllNextPoints(listPoints, idPoint, dist)
+
+        //это условие для того чтобы применить первое маштабирование , желательно зарефакторить
+        if(isFirstEditForScale){
+            listPoints = calcAllNextPoints(listPoints, idPoint, dist)
+            isFirstEditForScale=true
+            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
+        }else{
+            listPoints = calcAllNextPoints(listPoints, idPoint, dist)
+            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
+        }
 
         scaleCanvasTest()
         touchDown()
