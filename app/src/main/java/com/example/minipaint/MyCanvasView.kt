@@ -545,7 +545,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     Log.d("log","lengthInt   $lengthInt ")
                     Log.d("log","editedListPoints[i].realDistance   ${editedListPoints[i].realDistance} ")
                     Log.d("log","111111   $coefForMashtaba ")
-//todo надо изменить эту логику т.к. есть проблема если редактировать не первый отрезок
+
                     editedListPoints[i].distance = lengthInt.toFloat()
 //                    editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
 //                    editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
@@ -569,7 +569,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
                         editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
                         editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
-//todo ошибка по диагонали неправильно пересчитывается, не вводится моё значение вероятно надо как то привязаться к id редактированного отрезка
+
                         editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
                                 editedListPoints[j - 1].x,editedListPoints[j - 1].y)
 
