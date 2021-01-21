@@ -292,8 +292,6 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         if (isFigureDone) {
             //todo вот для чего нужен началный лист, чтобы правильно вычислять площадь , но его надо релактировать при изменении сторо
             drawSquarePerimetr(listPoints)
-
-            Log.d("log", "$motionTouchEventX    $motionTouchEventY  editSide DO")
             editSide(motionTouchEventX, motionTouchEventY, scaledListPoints)
 
         }
@@ -305,17 +303,17 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         //Это не первая точка черчежа
         isFirstTouch = false
 
-        val str = StringBuilder()
-            listPoints.forEach{
-                str!!.append("[idPoint = ${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance},realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
-            }
-        Log.d("Log", str.toString())
-
-        val str1 = StringBuilder()
-        scaledListPoints.forEach{
-            str1!!.append("*[idPoint =${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance}, realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
-        }
-        Log.d("Log", "$str1")
+//        val str = StringBuilder()
+//            listPoints.forEach{
+//                str!!.append("[idPoint = ${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance},realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
+//            }
+//        Log.d("Log", str.toString())
+//
+//        val str1 = StringBuilder()
+//        scaledListPoints.forEach{
+//            str1!!.append("*[idPoint =${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance}, realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
+//        }
+//        Log.d("Log", "$str1")
 
     }
 
@@ -367,7 +365,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
         //    Log.d("log",arrF.joinToString("          ;"))
         matrix.mapPoints(arrF)
-           Log.d("log",arrF.joinToString("          ;"))
+           //Log.d("log",arrF.joinToString("          ;"))
         //   extraCanvas.drawPath(pathDest, paint)
         iter = 0
         //меняю ху на преобразованые из матрицы
@@ -453,7 +451,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 if (it.middleX != 0 && it.middleY != 0 && it.idPoint != 0) {
 
                     //подменяю длину из начального листа
-                    distStr = (roundOffDecimal(listPoints[it.idPoint].distance,"#"))
+                   // distStr = (roundOffDecimal(listPoints[it.idPoint].distance,"#"))
+                    distStr = (listPoints[it.idPoint].distance.toString())
                  //   distStr = (roundOffDecimal(it.distance,"#"))
 
                     val xy = calcStartPoint(it)
@@ -515,7 +514,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     //ищем все следующие точки , если фигура закончена
-    private fun calcAllNextPoints(editedListPoints: MutableList<MyPoint>, idPoint: Int, length: String): MutableList<MyPoint> {
+    private fun calcAllNextPoints(editedListPoints: MutableList<MyPoint>, idPoint: Int, length: String, isForSquare: Boolean): MutableList<MyPoint> {
         var lengthInt = 0
         //todo эту обработку надо сделать в самом диалоге, чтобы не бесить юзера
 
@@ -542,9 +541,9 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
 
                     var coefForMashtaba =lengthInt/editedListPoints[i].realDistance
-                    Log.d("log","lengthInt   $lengthInt ")
-                    Log.d("log","editedListPoints[i].realDistance   ${editedListPoints[i].realDistance} ")
-                    Log.d("log","111111   $coefForMashtaba ")
+//                    Log.d("log","lengthInt   $lengthInt ")
+//                    Log.d("log","editedListPoints[i].realDistance   ${editedListPoints[i].realDistance} ")
+//                    Log.d("log","111111   $coefForMashtaba ")
 
                     editedListPoints[i].distance = lengthInt.toFloat()
 //                    editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
@@ -570,11 +569,21 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                         editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
                         editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
 
-                        editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
-                                editedListPoints[j - 1].x,editedListPoints[j - 1].y)
 
-                        Log.d("log","222222   ${editedListPoints[j].distance} ")
-                        Log.d("log","22222222   $coefForMashtaba ")
+                        //уловие для отбора листа увеличенного или нет
+                        if(isForSquare){
+                            editedListPoints[j].realDistance = editedListPoints[j].distance
+                        }else{
+                            editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
+                                    editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                        }
+
+
+
+
+
+//                        Log.d("log","222222   ${editedListPoints[j].distance} ")
+//                        Log.d("log","22222222   $coefForMashtaba ")
 
 
                         if(editedListPoints[j].idPoint ==idPoint) {
@@ -585,8 +594,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
 
 
-                        Log.d("log","333333   ${editedListPoints[j].distance} ")
-                        Log.d("log","333333   ${editedListPoints[j].distance*coefForMashtaba} ")
+//                        Log.d("log","333333   ${editedListPoints[j].distance} ")
+//                        Log.d("log","333333   ${editedListPoints[j].distance*coefForMashtaba} ")
 
                         //последний отрезок
                         if(j == editedListPoints.size-1){
@@ -612,12 +621,21 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
                     var realDistanceScaled = lengthInt * coefici
 
+                    Log.d("log", "---------$coefici")
+
                     editedListPoints[i].distance = lengthInt.toFloat()
                     editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
                     editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
                     editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
                     editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
 
+
+                    //уловие для отбора листа увеличенного или нет
+                    if(isForSquare){
+                        editedListPoints[i].realDistance = lengthInt.toFloat()
+                    }else{
+                        editedListPoints[i].realDistance = realDistanceScaled
+                    }
                     editedListPoints[i].realDistance = realDistanceScaled
                     //todo надо пробижаться с изменениями не только вперед но и назад , если редактировать размеры не по часовой пропорции все ломаются
                     //меняю точки следующие за редактируемым отрезком
@@ -700,12 +718,12 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         //это условие для того чтобы применить первое маштабирование , желательно зарефакторить
         if(isFirstEditForScale){
-            listPoints = calcAllNextPoints(listPoints, idPoint, dist)
+            listPoints = calcAllNextPoints(listPoints, idPoint, dist,true)
             isFirstEditForScale=true
-            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
+            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist,false)
         }else{
-            listPoints = calcAllNextPoints(listPoints, idPoint, dist)
-            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
+            listPoints = calcAllNextPoints(listPoints, idPoint, dist,true)
+            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist,false)
         }
 
         scaleCanvasTest()
