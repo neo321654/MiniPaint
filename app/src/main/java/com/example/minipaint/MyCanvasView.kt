@@ -303,17 +303,17 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         //Это не первая точка черчежа
         isFirstTouch = false
 
-//        val str = StringBuilder()
-//            listPoints.forEach{
-//                str!!.append("[idPoint = ${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance},realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
-//            }
-//        Log.d("Log", str.toString())
-//
-//        val str1 = StringBuilder()
-//        scaledListPoints.forEach{
-//            str1!!.append("*[idPoint =${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance}, realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
-//        }
-//        Log.d("Log", "$str1")
+        val str = StringBuilder()
+            listPoints.forEach{
+                str!!.append("[idPoint = ${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance},realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
+            }
+        Log.d("Log", str.toString())
+
+        val str1 = StringBuilder()
+        scaledListPoints.forEach{
+            str1!!.append("*[idPoint =${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance}, realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
+        }
+        Log.d("Log", "$str1")
 
     }
 
@@ -365,7 +365,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
         //    Log.d("log",arrF.joinToString("          ;"))
         matrix.mapPoints(arrF)
-           //Log.d("log",arrF.joinToString("          ;"))
+           Log.d("log",arrF.joinToString("          ;"))
         //   extraCanvas.drawPath(pathDest, paint)
         iter = 0
         //меняю ху на преобразованые из матрицы
@@ -533,30 +533,19 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             for (i in 0 until editedListPoints.size) {
                 if (editedListPoints[i].idPoint == idPoint) {
 
-//                    val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
-
                     val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
 
                     var realDistanceScaled = lengthInt * coefici
 
-
-                    var coefForMashtaba =lengthInt/editedListPoints[i].realDistance
-//                    Log.d("log","lengthInt   $lengthInt ")
-//                    Log.d("log","editedListPoints[i].realDistance   ${editedListPoints[i].realDistance} ")
-//                    Log.d("log","111111   $coefForMashtaba ")
-
+                    val coefForMashtaba =lengthInt/editedListPoints[i].realDistance
                     editedListPoints[i].distance = lengthInt.toFloat()
-//                    editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
-//                    editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
-//                    editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
-//                    editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
-//
-//                    editedListPoints[i].realDistance = realDistanceScaled
 
                     //меняю точки следующие за редактируемым отрезком
                     for(j in 1 until editedListPoints.size){
                         //выбрасвваю если то же id что и редактируемое
                         if(editedListPoints[j].idPoint ==idPoint) {
+                            realDistanceScaled = editedListPoints[j].distance
+                        }else if(isForSquare){
                             realDistanceScaled = editedListPoints[j].distance
                         }else{
                             realDistanceScaled = editedListPoints[j].distance * coefForMashtaba
@@ -572,18 +561,11 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
                         //уловие для отбора листа увеличенного или нет
                         if(isForSquare){
-                            editedListPoints[j].realDistance = editedListPoints[j].distance
+                            editedListPoints[j].realDistance = lengthInt.toFloat()
                         }else{
                             editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
                                     editedListPoints[j - 1].x,editedListPoints[j - 1].y)
                         }
-
-
-
-
-
-//                        Log.d("log","222222   ${editedListPoints[j].distance} ")
-//                        Log.d("log","22222222   $coefForMashtaba ")
 
 
                         if(editedListPoints[j].idPoint ==idPoint) {
@@ -593,9 +575,6 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                         }
 
 
-
-//                        Log.d("log","333333   ${editedListPoints[j].distance} ")
-//                        Log.d("log","333333   ${editedListPoints[j].distance*coefForMashtaba} ")
 
                         //последний отрезок
                         if(j == editedListPoints.size-1){
