@@ -649,11 +649,65 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         }
 
-
-
-
-
         return editedListPoints
+    }
+    private fun calcAllNextPointsForFirstList(editedListPoints: MutableList<MyPoint>, idPoint: Int,
+                                              length: String): MutableList<MyPoint> {
+        var lengthInt = 0
+        //todo эту обработку надо сделать в самом диалоге, чтобы не бесить юзера
+
+        try {
+            lengthInt = length.toInt()
+        } catch (e: NumberFormatException) {
+            Toast.makeText(context, R.string.notNumber, Toast.LENGTH_SHORT).show()
+            motionTouchEventX = 0f
+            motionTouchEventY = 0f
+            return editedListPoints
+        }
+
+        for (i in 0 until editedListPoints.size) {
+            if (editedListPoints[i].idPoint == idPoint) {
+
+               // val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
+                var realDistanceScaled = lengthInt
+
+                editedListPoints[i].distance = lengthInt.toFloat()
+                editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
+                editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
+                editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
+                editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
+
+                editedListPoints[i].realDistance = realDistanceScaled.toFloat()
+                 //меняю точки следующие за редактируемым отрезком
+                for(j in 1 until editedListPoints.size){
+
+                    realDistanceScaled = editedListPoints[j].distance.toInt()
+                    editedListPoints[j].x = (editedListPoints[j - 1].x + realDistanceScaled * editedListPoints[j].mCos).toInt()
+                    editedListPoints[j].y = (editedListPoints[j - 1].y + realDistanceScaled * editedListPoints[j].mSin).toInt()
+
+                    editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
+                    editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
+//todo ошибка по диагонали неправильно пересчитывается, не вводится моё значение вероятно надо как то привязаться к id редактированного отрезка
+                    editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
+                            editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                    editedListPoints[j].distance = editedListPoints[j].realDistance
+
+                    if(j == editedListPoints.size-1){
+                        editedListPoints[j].x = editedListPoints[0].x
+                        editedListPoints[j].y = editedListPoints[0].y
+                        editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
+                        editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
+                        editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x,editedListPoints[0].y,
+                                editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                        editedListPoints[j].distance = editedListPoints[j].realDistance
+
+                    }
+                }
+            }
+        }
+
+
+    return editedListPoints
     }
 
     //отображаем площадь и периметр
@@ -701,7 +755,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             isFirstEditForScale=true
             scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist,false)
         }else{
-            listPoints = calcAllNextPoints(listPoints, idPoint, dist,true)
+            listPoints = calcAllNextPointsForFirstList(listPoints, idPoint, dist)
             scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist,false)
         }
 
