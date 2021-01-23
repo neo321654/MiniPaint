@@ -452,7 +452,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
                     //подменяю длину из начального листа
                    // distStr = (roundOffDecimal(listPoints[it.idPoint].distance,"#"))
-                    distStr = (listPoints[it.idPoint].distance.toString())
+                    distStr = (roundOffDecimal(listPoints[it.idPoint].distance,"#"))
                  //   distStr = (roundOffDecimal(it.distance,"#"))
 
                     val xy = calcStartPoint(it)
