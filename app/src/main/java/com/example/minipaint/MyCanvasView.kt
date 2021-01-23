@@ -2,6 +2,7 @@ package com.example.minipaint
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.graphics.*
 import android.util.Log
 import android.view.GestureDetector
@@ -9,6 +10,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.Toast
+import androidx.core.app.ActivityCompat.startActivityForResult
+import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
@@ -420,8 +423,10 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 extraCanvas.drawPath(pathEdit, paintEdit)
                 //показываю диалог для ввода ширины
                 //todo() заменить диалог на активити с холо темой .т.к. в не могу сразу показать клаву для эдит текста
-                val dialogLength = DialogLenght(this, listPointsEdited[i])
-                dialogLength.show(supportFragmentManager, "missiles")
+//                val dialogLength = DialogLenght(this, listPointsEdited[i])
+//                dialogLength.show(supportFragmentManager, "missiles")
+                val intent = Intent(context, EditSide::class.java)
+                context.startActivity(intent)
                 break
             }
 
@@ -514,7 +519,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
     }
 
     //ищем все следующие точки , если фигура закончена
-    private fun calcAllNextPoints(editedListPoints: MutableList<MyPoint>, idPoint: Int, length: String, isForSquare: Boolean): MutableList<MyPoint> {
+    private fun calcAllNextPoints(editedListPoints: MutableList<MyPoint>, idPoint: Int, length: String): MutableList<MyPoint> {
         var lengthInt = 0
         //todo эту обработку надо сделать в самом диалоге, чтобы не бесить юзера
 
@@ -545,8 +550,6 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                         //выбрасвваю если то же id что и редактируемое
                         if(editedListPoints[j].idPoint ==idPoint) {
                             realDistanceScaled = editedListPoints[j].distance
-                        }else if(isForSquare){
-                            realDistanceScaled = editedListPoints[j].distance
                         }else{
                             realDistanceScaled = editedListPoints[j].distance * coefForMashtaba
                         }
@@ -560,12 +563,10 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
 
                         //уловие для отбора листа увеличенного или нет
-                        if(isForSquare){
-                            editedListPoints[j].realDistance = lengthInt.toFloat()
-                        }else{
+
                             editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
                                     editedListPoints[j - 1].x,editedListPoints[j - 1].y)
-                        }
+
 
 
                         if(editedListPoints[j].idPoint ==idPoint) {
@@ -599,22 +600,12 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
                     val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
                     var realDistanceScaled = lengthInt * coefici
-
-                    Log.d("log", "---------$coefici")
-
                     editedListPoints[i].distance = lengthInt.toFloat()
                     editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
                     editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
                     editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
                     editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
 
-
-                    //уловие для отбора листа увеличенного или нет
-                    if(isForSquare){
-                        editedListPoints[i].realDistance = lengthInt.toFloat()
-                    }else{
-                        editedListPoints[i].realDistance = realDistanceScaled
-                    }
                     editedListPoints[i].realDistance = realDistanceScaled
                     //todo надо пробижаться с изменениями не только вперед но и назад , если редактировать размеры не по часовой пропорции все ломаются
                     //меняю точки следующие за редактируемым отрезком
@@ -642,8 +633,6 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
                         }
                     }
-
-
                 }
             }
 
@@ -751,12 +740,12 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         //это условие для того чтобы применить первое маштабирование , желательно зарефакторить
         if(isFirstEditForScale){
-            listPoints = calcAllNextPoints(listPoints, idPoint, dist,true)
+            listPoints = calcAllNextPoints(listPoints, idPoint, dist)
             isFirstEditForScale=true
-            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist,false)
+            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
         }else{
             listPoints = calcAllNextPointsForFirstList(listPoints, idPoint, dist)
-            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist,false)
+            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
         }
 
         scaleCanvasTest()
