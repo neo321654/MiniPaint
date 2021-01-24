@@ -11,7 +11,8 @@
         android:theme="@style/Theme.MiniPaint">
         <activity
             android:name=".EditSide"
-            android:theme="@android:style/Theme.Holo.Dialog.NoActionBar" />
+            android:theme="@android:style/Theme.Holo.Dialog.NoActionBar"
+            />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

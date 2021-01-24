@@ -1,29 +1,61 @@
 package com.example.minipaint
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.*
+import android.os.Build.ID
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.Toast
-import androidx.core.app.ActivityCompat.startActivityForResult
-import androidx.core.content.ContextCompat.startActivity
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.FragmentManager
+
 
 private const val STROKE_WIDTH = 6f
 
-class MyCanvasView(context: Context, private val supportFragmentManager: FragmentManager) : View(context), DialogLenght.DialogLenghtListener {
+class MyCanvasView(context: Context) : View(context), DialogLenght.DialogLenghtListener {
 
-//from old laptop
     private var scaledListPoints: MutableList<MyPoint> = mutableListOf()
-    private val matrixIsFigureDone = Matrix()
     private val circleRadius = 30f
+
+    //привожу контекст к активити чтобы вызвать registerForActivityResult
+    private val contextActivity: AppCompatActivity = context as AppCompatActivity
+
+    private val startForResult = contextActivity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val intent = result.data
+
+//            //чтобы не было повторного нажатия диалога
+//            motionTouchEventX = 0f
+//            motionTouchEventY = 0f
+//
+//
+//            //это условие для того чтобы применить первое маштабирование , желательно зарефакторить
+//            if(isFirstEditForScale){
+//                listPoints = calcAllNextPoints(listPoints, idPoint, dist)
+//                isFirstEditForScale=true
+//                scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
+//            }else{
+//                listPoints = calcAllNextPointsForFirstList(listPoints, idPoint, dist)
+//                scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
+//            }
+//
+//            scaleCanvasTest()
+//            touchDown()
+//            touchUp()
+        }
+    }
+
     private val textSize = 40f
     private var isFigureDone = false
     private var counterPointId = 0
@@ -72,7 +104,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
         override fun onDoubleTap(e: MotionEvent?): Boolean {
             super.onDoubleTap(e)
-            scaleCanvas(false,false)
+            scaleCanvas(false, false)
             return true
         }
 
@@ -87,9 +119,9 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         val pathDest = Path()
         scaledListPoints.forEach{
            if(it.idPoint == 0){
-               pathDest.moveTo(it.x.toFloat(),it.y.toFloat())
+               pathDest.moveTo(it.x.toFloat(), it.y.toFloat())
            }else{
-               pathDest.lineTo(it.x.toFloat(),it.y.toFloat())
+               pathDest.lineTo(it.x.toFloat(), it.y.toFloat())
            }
 
         }
@@ -101,11 +133,11 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             val bounds = (extraCanvas.width*0.1).toFloat()
             //прямоугольник-рамка для вписания
             val rectfDest = RectF()
-            rectfDest.set(bounds, bounds*2, extraCanvas.width-bounds, extraCanvas.height-bounds)
+            rectfDest.set(bounds, bounds * 2, extraCanvas.width - bounds, extraCanvas.height - bounds)
             //вычисление границ чертежа и присвоение этих границ прямоугольнику
            pathDest.computeBounds(rectfBounds, true);
         //матрица выполняющая вписание одного прямоугольника в другой
-            matrix.setRectToRect(rectfBounds,rectfDest, Matrix.ScaleToFit.CENTER);
+            matrix.setRectToRect(rectfBounds, rectfDest, Matrix.ScaleToFit.CENTER);
         //здесь находим новые точки с помощью матрицы matrix.mapPoints()
         val arrF = FloatArray(scaledListPoints.size * 2)
         var iter = 0
@@ -336,11 +368,11 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
             //прямоугольник-рамка для вписания
 
             val rectfDest = RectF()
-            rectfDest.set(bounds, bounds, extraCanvas.width-bounds, extraCanvas.height-bounds)
+            rectfDest.set(bounds, bounds, extraCanvas.width - bounds, extraCanvas.height - bounds)
             //вычисление границ чертежа и присвоение этих границ прямоугольнику
              path.computeBounds(rectfBounds, true);
             //матрица выполняющая вписание одного прямоугольника в другой
-            matrix.setRectToRect(rectfBounds,rectfDest, Matrix.ScaleToFit.CENTER);
+            matrix.setRectToRect(rectfBounds, rectfDest, Matrix.ScaleToFit.CENTER);
         // попробую найти матрицу по краям чечежа и увеличить её
         }else{
             matrix.setRectToRect(rectfBounds, rectfBounds, Matrix.ScaleToFit.CENTER);
@@ -368,7 +400,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         }
         //    Log.d("log",arrF.joinToString("          ;"))
         matrix.mapPoints(arrF)
-           Log.d("log",arrF.joinToString("          ;"))
+           Log.d("log", arrF.joinToString("          ;"))
         //   extraCanvas.drawPath(pathDest, paint)
         iter = 0
         //меняю ху на преобразованые из матрицы
@@ -421,12 +453,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                 pathEdit.moveTo(xy[0], xy[1])
                 pathEdit.lineTo(listPointsEdited[i].x.toFloat(), listPointsEdited[i].y.toFloat())
                 extraCanvas.drawPath(pathEdit, paintEdit)
-                //показываю диалог для ввода ширины
-                //todo() заменить диалог на активити с холо темой .т.к. в не могу сразу показать клаву для эдит текста
-//                val dialogLength = DialogLenght(this, listPointsEdited[i])
-//                dialogLength.show(supportFragmentManager, "missiles")
-                val intent = Intent(context, EditSide::class.java)
-                context.startActivity(intent)
+                //Запускаю активити
+                startForResult.launch(Intent(context, EditSide::class.java))
                 break
             }
 
@@ -457,7 +485,7 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
                     //подменяю длину из начального листа
                    // distStr = (roundOffDecimal(listPoints[it.idPoint].distance,"#"))
-                    distStr = (roundOffDecimal(listPoints[it.idPoint].distance,"#"))
+                    distStr = (roundOffDecimal(listPoints[it.idPoint].distance, "#"))
                  //   distStr = (roundOffDecimal(it.distance,"#"))
 
                     val xy = calcStartPoint(it)
@@ -470,22 +498,22 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     widthText = p.measureText(distStr);
                     //увловие для последнего отрезка, беру значение не из увеличенного листа а из первого листа
                     if(it.idPoint == scaledListPoints.size-1 ){
-                        distStr = roundOffDecimal(listPoints.last().distance,"#")
+                        distStr = roundOffDecimal(listPoints.last().distance, "#")
                     }
                   //  extraCanvas.drawTextOnPath(distStr, path2, (realDist - widthText) / 2, -10F, p)
                     p.color= drawColor
 
 
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                        extraCanvas.drawRoundRect(it.middleX.toFloat()-widthText/2,it.middleY.toFloat()+textSize/2,
-                                it.middleX.toFloat()+widthText/2,it.middleY-textSize/2,8f,8f,p)
+                        extraCanvas.drawRoundRect(it.middleX.toFloat() - widthText / 2, it.middleY.toFloat() + textSize / 2,
+                                it.middleX.toFloat() + widthText / 2, it.middleY - textSize / 2, 8f, 8f, p)
                     }else{
-                        extraCanvas.drawRect(it.middleX.toFloat()-widthText/2,it.middleY.toFloat()+textSize/2,
-                                it.middleX.toFloat()+widthText/2,it.middleY-textSize/2,p)
+                        extraCanvas.drawRect(it.middleX.toFloat() - widthText / 2, it.middleY.toFloat() + textSize / 2,
+                                it.middleX.toFloat() + widthText / 2, it.middleY - textSize / 2, p)
                     }
 
                     p.color= Color.BLACK
-                    extraCanvas.drawText(distStr,it.middleX.toFloat()-(widthText/2),it.middleY+(textSize/2-STROKE_WIDTH/2),p)
+                    extraCanvas.drawText(distStr, it.middleX.toFloat() - (widthText / 2), it.middleY + (textSize / 2 - STROKE_WIDTH / 2), p)
 
                     path2.reset()
                 }
@@ -502,15 +530,15 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     p.color= drawColor
 
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                        extraCanvas.drawRoundRect(it.middleX.toFloat()-widthText/2,it.middleY.toFloat()+textSize/2,
-                                it.middleX.toFloat()+widthText/2,it.middleY-textSize/2,8f,8f,p)
+                        extraCanvas.drawRoundRect(it.middleX.toFloat() - widthText / 2, it.middleY.toFloat() + textSize / 2,
+                                it.middleX.toFloat() + widthText / 2, it.middleY - textSize / 2, 8f, 8f, p)
                     }else{
-                        extraCanvas.drawRect(it.middleX.toFloat()-widthText/2,it.middleY.toFloat()+textSize/2,
-                                it.middleX.toFloat()+widthText/2,it.middleY-textSize/2,p)
+                        extraCanvas.drawRect(it.middleX.toFloat() - widthText / 2, it.middleY.toFloat() + textSize / 2,
+                                it.middleX.toFloat() + widthText / 2, it.middleY - textSize / 2, p)
                     }
                     p.color= Color.BLACK
 
-                    extraCanvas.drawText(distStr,it.middleX.toFloat()-(widthText/2),it.middleY+(textSize/2-STROKE_WIDTH/2),p)
+                    extraCanvas.drawText(distStr, it.middleX.toFloat() - (widthText / 2), it.middleY + (textSize / 2 - STROKE_WIDTH / 2), p)
                   //  extraCanvas.drawTextOnPath(distStr, path2, (it.distance.toInt() - widthText) / 2, -10F, p)
                     path2.reset()
                 }
@@ -564,8 +592,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
 
                         //уловие для отбора листа увеличенного или нет
 
-                            editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
-                                    editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                            editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x, editedListPoints[j].y,
+                                    editedListPoints[j - 1].x, editedListPoints[j - 1].y)
 
 
 
@@ -583,8 +611,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                             editedListPoints[j].y = editedListPoints[0].y
                             editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
                             editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
-                            editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x,editedListPoints[0].y,
-                                    editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                            editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x, editedListPoints[0].y,
+                                    editedListPoints[j - 1].x, editedListPoints[j - 1].y)
                             editedListPoints[j].distance = editedListPoints[j].realDistance/coefici
 
                         }
@@ -618,8 +646,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                         editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
                         editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
 //todo ошибка по диагонали неправильно пересчитывается, не вводится моё значение вероятно надо как то привязаться к id редактированного отрезка
-                        editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
-                                editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                        editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x, editedListPoints[j].y,
+                                editedListPoints[j - 1].x, editedListPoints[j - 1].y)
                         editedListPoints[j].distance = editedListPoints[j].realDistance/coefici
 
                         if(j == editedListPoints.size-1){
@@ -627,8 +655,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                             editedListPoints[j].y = editedListPoints[0].y
                             editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
                             editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
-                            editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x,editedListPoints[0].y,
-                                    editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                            editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x, editedListPoints[0].y,
+                                    editedListPoints[j - 1].x, editedListPoints[j - 1].y)
                             editedListPoints[j].distance = editedListPoints[j].realDistance/coefici
 
                         }
@@ -677,8 +705,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                     editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
                     editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
 //todo ошибка по диагонали неправильно пересчитывается, не вводится моё значение вероятно надо как то привязаться к id редактированного отрезка
-                    editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x,editedListPoints[j].y,
-                            editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                    editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x, editedListPoints[j].y,
+                            editedListPoints[j - 1].x, editedListPoints[j - 1].y)
                     editedListPoints[j].distance = editedListPoints[j].realDistance
 
                     if(j == editedListPoints.size-1){
@@ -686,8 +714,8 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
                         editedListPoints[j].y = editedListPoints[0].y
                         editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
                         editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
-                        editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x,editedListPoints[0].y,
-                                editedListPoints[j - 1].x,editedListPoints[j - 1].y)
+                        editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x, editedListPoints[0].y,
+                                editedListPoints[j - 1].x, editedListPoints[j - 1].y)
                         editedListPoints[j].distance = editedListPoints[j].realDistance
 
                     }
@@ -773,7 +801,31 @@ class MyCanvasView(context: Context, private val supportFragmentManager: Fragmen
         super.onDraw(canvas)
         canvas.drawBitmap(extraBitmap, 0f, 0f, null)
     }
+    // Custom activity result contract
+
+
+
+class PostActivityContract : ActivityResultContract<Int, String?>() {
+
+//    override fun createIntent(context: Context, input: Int): Intent {
+//        return Intent(context, EditSide::class.java).apply {
+//            putExtra(PostActivity.ID, postId)
+//        }
+//    }
+
+    override fun createIntent(context: Context, input: Int): Intent {
+    return Intent(context, EditSide::class.java)
+    }
+
+    override fun parseResult(resultCode: Int, intent: Intent?): String? {
+        val data = intent?.getStringExtra("length")
+        return if (resultCode == Activity.RESULT_OK && data != null) data
+        else null
+    }
 }
+
+       }
+
 
 data class MyPoint(var x: Int, var y: Int, var idPoint: Int = 0, var distance: Float = 0f,
                    var mCos: Float = 0f, var mSin: Float = 0f, var middleX: Int = 0, var middleY: Int = 0, var realDistance: Float = 0f)
