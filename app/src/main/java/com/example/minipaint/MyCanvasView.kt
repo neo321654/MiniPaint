@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.*
-import android.os.Build.ID
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -13,7 +12,6 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -33,26 +31,28 @@ class MyCanvasView(context: Context) : View(context), DialogLenght.DialogLenghtL
 
     private val startForResult = contextActivity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val intent = result.data
+            val intent= result.data!!
+            val idPoint = intent.getIntExtra("idPoint",10)
+            val dist = intent.getIntExtra("length",10)
 
-//            //чтобы не было повторного нажатия диалога
-//            motionTouchEventX = 0f
-//            motionTouchEventY = 0f
-//
-//
-//            //это условие для того чтобы применить первое маштабирование , желательно зарефакторить
-//            if(isFirstEditForScale){
-//                listPoints = calcAllNextPoints(listPoints, idPoint, dist)
-//                isFirstEditForScale=true
-//                scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
-//            }else{
-//                listPoints = calcAllNextPointsForFirstList(listPoints, idPoint, dist)
-//                scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
-//            }
-//
-//            scaleCanvasTest()
-//            touchDown()
-//            touchUp()
+            //чтобы не было повторного нажатия диалога
+            motionTouchEventX = 0f
+            motionTouchEventY = 0f
+
+
+            //это условие для того чтобы применить первое маштабирование , желательно зарефакторить
+            if(isFirstEditForScale){
+                listPoints = calcAllNextPoints(listPoints, idPoint, dist)
+                isFirstEditForScale=true
+                scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
+            }else{
+                listPoints = calcAllNextPointsForFirstList(listPoints, idPoint, dist)
+                scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
+            }
+
+            scaleCanvasTest()
+            touchDown()
+            touchUp()
         }
     }
 
@@ -454,7 +454,9 @@ class MyCanvasView(context: Context) : View(context), DialogLenght.DialogLenghtL
                 pathEdit.lineTo(listPointsEdited[i].x.toFloat(), listPointsEdited[i].y.toFloat())
                 extraCanvas.drawPath(pathEdit, paintEdit)
                 //Запускаю активити
-                startForResult.launch(Intent(context, EditSide::class.java))
+                startForResult.launch(Intent(context, EditSide::class.java).apply {
+                    putExtra("idPoint",listPointsEdited[i].idPoint)
+                })
                 break
             }
 
@@ -547,18 +549,7 @@ class MyCanvasView(context: Context) : View(context), DialogLenght.DialogLenghtL
     }
 
     //ищем все следующие точки , если фигура закончена
-    private fun calcAllNextPoints(editedListPoints: MutableList<MyPoint>, idPoint: Int, length: String): MutableList<MyPoint> {
-        var lengthInt = 0
-        //todo эту обработку надо сделать в самом диалоге, чтобы не бесить юзера
-
-        try {
-            lengthInt = length.toInt()
-        } catch (e: NumberFormatException) {
-            Toast.makeText(context, R.string.notNumber, Toast.LENGTH_SHORT).show()
-            motionTouchEventX = 0f
-            motionTouchEventY = 0f
-            return editedListPoints
-        }
+    private fun calcAllNextPoints(editedListPoints: MutableList<MyPoint>, idPoint: Int, length: Int): MutableList<MyPoint> {
 
         //условие если первая коректировка длины
         if(isFirstEditForScale){
@@ -568,10 +559,10 @@ class MyCanvasView(context: Context) : View(context), DialogLenght.DialogLenghtL
 
                     val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
 
-                    var realDistanceScaled = lengthInt * coefici
+                    var realDistanceScaled = length * coefici
 
-                    val coefForMashtaba =lengthInt/editedListPoints[i].realDistance
-                    editedListPoints[i].distance = lengthInt.toFloat()
+                    val coefForMashtaba = length /editedListPoints[i].realDistance
+                    editedListPoints[i].distance = length.toFloat()
 
                     //меняю точки следующие за редактируемым отрезком
                     for(j in 1 until editedListPoints.size){
@@ -627,8 +618,8 @@ class MyCanvasView(context: Context) : View(context), DialogLenght.DialogLenghtL
                 if (editedListPoints[i].idPoint == idPoint) {
 
                     val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
-                    var realDistanceScaled = lengthInt * coefici
-                    editedListPoints[i].distance = lengthInt.toFloat()
+                    var realDistanceScaled = length * coefici
+                    editedListPoints[i].distance = length.toFloat()
                     editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
                     editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
                     editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
@@ -669,26 +660,16 @@ class MyCanvasView(context: Context) : View(context), DialogLenght.DialogLenghtL
         return editedListPoints
     }
     private fun calcAllNextPointsForFirstList(editedListPoints: MutableList<MyPoint>, idPoint: Int,
-                                              length: String): MutableList<MyPoint> {
-        var lengthInt = 0
-        //todo эту обработку надо сделать в самом диалоге, чтобы не бесить юзера
+                                              length: Int): MutableList<MyPoint> {
 
-        try {
-            lengthInt = length.toInt()
-        } catch (e: NumberFormatException) {
-            Toast.makeText(context, R.string.notNumber, Toast.LENGTH_SHORT).show()
-            motionTouchEventX = 0f
-            motionTouchEventY = 0f
-            return editedListPoints
-        }
 
         for (i in 0 until editedListPoints.size) {
             if (editedListPoints[i].idPoint == idPoint) {
 
                // val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
-                var realDistanceScaled = lengthInt
+                var realDistanceScaled = length
 
-                editedListPoints[i].distance = lengthInt.toFloat()
+                editedListPoints[i].distance = length.toFloat()
                 editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
                 editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
                 editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
@@ -762,23 +743,23 @@ class MyCanvasView(context: Context) : View(context), DialogLenght.DialogLenghtL
     //ок в диалоге
     override fun onDialogPositiveClick(dist: String, idPoint: Int) {
       //чтобы не было повторного нажатия диалога
-        motionTouchEventX = 0f
-        motionTouchEventY = 0f
-
-
-        //это условие для того чтобы применить первое маштабирование , желательно зарефакторить
-        if(isFirstEditForScale){
-            listPoints = calcAllNextPoints(listPoints, idPoint, dist)
-            isFirstEditForScale=true
-            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
-        }else{
-            listPoints = calcAllNextPointsForFirstList(listPoints, idPoint, dist)
-            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
-        }
-
-        scaleCanvasTest()
-        touchDown()
-        touchUp()
+//        motionTouchEventX = 0f
+//        motionTouchEventY = 0f
+//
+//
+//        //это условие для того чтобы применить первое маштабирование , желательно зарефакторить
+//        if(isFirstEditForScale){
+//            listPoints = calcAllNextPoints(listPoints, idPoint, dist)
+//            isFirstEditForScale=true
+//            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
+//        }else{
+//            listPoints = calcAllNextPointsForFirstList(listPoints, idPoint, dist)
+//            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
+//        }
+//
+//        scaleCanvasTest()
+//        touchDown()
+//        touchUp()
     }
 
     //нет в диалоге

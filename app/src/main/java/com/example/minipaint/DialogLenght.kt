@@ -18,7 +18,9 @@ class DialogLenght(myCanvasView: MyCanvasView, editedPoint: MyPoint) : DialogFra
 
     private val myCanvasView = myCanvasView
     private val editedPoint = editedPoint
+
     internal lateinit var listener: DialogLenghtListener
+
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
        val dialog =  activity?.let {

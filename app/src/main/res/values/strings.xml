@@ -8,4 +8,5 @@
     <string name="cancel">ОТМЕНА</string>
     <string name="lastDistance">Последний отрезок, не редактируется</string>
     <string name="notNumber">Введено некоректное число</string>
+    <string name="ok">ok</string>
 </resources>
