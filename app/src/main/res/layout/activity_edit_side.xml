@@ -14,6 +14,7 @@
     <EditText
         android:id="@+id/needLenght"
         android:inputType="phone"
+        android:imeOptions="actionGo"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:layout_width="match_parent"

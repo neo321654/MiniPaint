@@ -6,10 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.*
 import android.util.Log
-import android.view.GestureDetector
-import android.view.MotionEvent
-import android.view.View
-import android.view.ViewConfiguration
+import android.view.*
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContract
@@ -21,7 +18,7 @@ import androidx.fragment.app.DialogFragment
 
 private const val STROKE_WIDTH = 6f
 
-class MyCanvasView(context: Context) : View(context), DialogLenght.DialogLenghtListener {
+class MyCanvasView(context: Context) : View(context){
 
     private var scaledListPoints: MutableList<MyPoint> = mutableListOf()
     private val circleRadius = 30f
@@ -740,34 +737,6 @@ class MyCanvasView(context: Context) : View(context), DialogLenght.DialogLenghtL
 
     }
 
-    //ок в диалоге
-    override fun onDialogPositiveClick(dist: String, idPoint: Int) {
-      //чтобы не было повторного нажатия диалога
-//        motionTouchEventX = 0f
-//        motionTouchEventY = 0f
-//
-//
-//        //это условие для того чтобы применить первое маштабирование , желательно зарефакторить
-//        if(isFirstEditForScale){
-//            listPoints = calcAllNextPoints(listPoints, idPoint, dist)
-//            isFirstEditForScale=true
-//            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
-//        }else{
-//            listPoints = calcAllNextPointsForFirstList(listPoints, idPoint, dist)
-//            scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
-//        }
-//
-//        scaleCanvasTest()
-//        touchDown()
-//        touchUp()
-    }
-
-    //нет в диалоге
-    override fun onDialogNegativeClick(dialog: DialogFragment) {
-        //надо найти центр фигуры, и вычислить увеличение про прямоугольнику вписанной фигуры
-        //  extraCanvas.scale(0.3f,0.3f, 400f,400f)
-    }
-
     //здесь происходит начальная инициализация канваса
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
@@ -782,30 +751,9 @@ class MyCanvasView(context: Context) : View(context), DialogLenght.DialogLenghtL
         super.onDraw(canvas)
         canvas.drawBitmap(extraBitmap, 0f, 0f, null)
     }
-    // Custom activity result contract
 
 
-
-class PostActivityContract : ActivityResultContract<Int, String?>() {
-
-//    override fun createIntent(context: Context, input: Int): Intent {
-//        return Intent(context, EditSide::class.java).apply {
-//            putExtra(PostActivity.ID, postId)
-//        }
-//    }
-
-    override fun createIntent(context: Context, input: Int): Intent {
-    return Intent(context, EditSide::class.java)
-    }
-
-    override fun parseResult(resultCode: Int, intent: Intent?): String? {
-        val data = intent?.getStringExtra("length")
-        return if (resultCode == Activity.RESULT_OK && data != null) data
-        else null
-    }
 }
-
-       }
 
 
 data class MyPoint(var x: Int, var y: Int, var idPoint: Int = 0, var distance: Float = 0f,
