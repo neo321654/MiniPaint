@@ -20,7 +20,7 @@ private const val STROKE_WIDTH = 6f
 
 class MyCanvasView(context: Context, private val supportFragmentManager: FragmentManager) : View(context), DialogLenght.DialogLenghtListener {
 
-
+//from old laptop
     private var scaledListPoints: MutableList<MyPoint> = mutableListOf()
     private val matrixIsFigureDone = Matrix()
     private val circleRadius = 30f
