@@ -6,19 +6,20 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.*
 import android.util.Log
-import android.view.*
+import android.view.GestureDetector
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewConfiguration
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
-import androidx.fragment.app.DialogFragment
 
 
 private const val STROKE_WIDTH = 6f
 
-class MyCanvasView(context: Context) : View(context){
+class MyCanvasView(context: Context) : View(context) {
 
     private var scaledListPoints: MutableList<MyPoint> = mutableListOf()
     private val circleRadius = 30f
@@ -28,9 +29,9 @@ class MyCanvasView(context: Context) : View(context){
 
     private val startForResult = contextActivity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val intent= result.data!!
-            val idPoint = intent.getIntExtra("idPoint",10)
-            val dist = intent.getIntExtra("length",10)
+            val intent = result.data!!
+            val idPoint = intent.getIntExtra("idPoint", 10)
+            val dist = intent.getIntExtra("length", 10)
 
             //чтобы не было повторного нажатия диалога
             motionTouchEventX = 0f
@@ -38,16 +39,16 @@ class MyCanvasView(context: Context) : View(context){
 
 
             //это условие для того чтобы применить первое маштабирование , желательно зарефакторить
-            if(isFirstEditForScale){
+            if (isFirstEditForScale) {
                 listPoints = calcAllNextPoints(listPoints, idPoint, dist)
-                isFirstEditForScale=true
+                isFirstEditForScale = true
                 scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
-            }else{
+            } else {
                 listPoints = calcAllNextPointsForFirstList(listPoints, idPoint, dist)
                 scaledListPoints = calcAllNextPoints(scaledListPoints, idPoint, dist)
             }
-
-            scaleCanvasTest()
+            //моштабирую чертеж
+            scaleCanvasToEdge()
             touchDown()
             touchUp()
         }
@@ -90,13 +91,13 @@ class MyCanvasView(context: Context) : View(context){
     private val listenerForDetectorGesture = object : GestureDetector.SimpleOnGestureListener() {
         override fun onLongPress(e: MotionEvent?) {
             super.onLongPress(e)
-         //   scaleCanvas(true,false)
+            //   scaleCanvas(true,false)
 
-          //  scaleCanvasTest()
+            //  scaleCanvasTest()
 //            touchDown()
 //
 //            touchUp()
-               Toast.makeText(context, "h ${extraCanvas.height}; w${extraCanvas.width};", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "h ${extraCanvas.height}; w${extraCanvas.width};", Toast.LENGTH_LONG).show()
         }
 
         override fun onDoubleTap(e: MotionEvent?): Boolean {
@@ -111,15 +112,15 @@ class MyCanvasView(context: Context) : View(context){
         }
     }
 
-    private fun scaleCanvasTest() {
+    private fun scaleCanvasToEdge() {
         //прорисовываю путь с известными точками т.к. он теряется в определённые моменты
         val pathDest = Path()
-        scaledListPoints.forEach{
-           if(it.idPoint == 0){
-               pathDest.moveTo(it.x.toFloat(), it.y.toFloat())
-           }else{
-               pathDest.lineTo(it.x.toFloat(), it.y.toFloat())
-           }
+        scaledListPoints.forEach {
+            if (it.idPoint == 0) {
+                pathDest.moveTo(it.x.toFloat(), it.y.toFloat())
+            } else {
+                pathDest.lineTo(it.x.toFloat(), it.y.toFloat())
+            }
 
         }
 
@@ -127,14 +128,14 @@ class MyCanvasView(context: Context) : View(context){
         val matrix = Matrix()
         matrix.reset()
 
-            val bounds = (extraCanvas.width*0.1).toFloat()
-            //прямоугольник-рамка для вписания
-            val rectfDest = RectF()
-            rectfDest.set(bounds, bounds * 2, extraCanvas.width - bounds, extraCanvas.height - bounds)
-            //вычисление границ чертежа и присвоение этих границ прямоугольнику
-           pathDest.computeBounds(rectfBounds, true);
+        val bounds = (extraCanvas.width * 0.1).toFloat()
+        //прямоугольник-рамка для вписания
+        val rectfDest = RectF()
+        rectfDest.set(bounds, bounds * 2, extraCanvas.width - bounds, extraCanvas.height - bounds)
+        //вычисление границ чертежа и присвоение этих границ прямоугольнику
+        pathDest.computeBounds(rectfBounds, true);
         //матрица выполняющая вписание одного прямоугольника в другой
-            matrix.setRectToRect(rectfBounds, rectfDest, Matrix.ScaleToFit.CENTER);
+        matrix.setRectToRect(rectfBounds, rectfDest, Matrix.ScaleToFit.CENTER);
         //здесь находим новые точки с помощью матрицы matrix.mapPoints()
         val arrF = FloatArray(scaledListPoints.size * 2)
         var iter = 0
@@ -322,30 +323,25 @@ class MyCanvasView(context: Context) : View(context){
 
         //выводим площадь и перметр
         if (isFigureDone) {
-            //todo вот для чего нужен началный лист, чтобы правильно вычислять площадь , но его надо релактировать при изменении сторо
-            drawSquarePerimetr(listPoints)
+            drawSquarePerimeter(listPoints)
             editSide(motionTouchEventX, motionTouchEventY, scaledListPoints)
-
         }
         //рисуем длину отрезков
-        //todo надо или не надо рисовать округлённые значения , а точки сохранять во float , для большей точности при увеличении и уменьшении.
         drawNumberLength()
-
-    //    scaleCanvasTest()
         //Это не первая точка черчежа
         isFirstTouch = false
 
-        val str = StringBuilder()
-            listPoints.forEach{
-                str!!.append("[idPoint = ${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance},realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
-            }
-        Log.d("Log", str.toString())
-
-        val str1 = StringBuilder()
-        scaledListPoints.forEach{
-            str1!!.append("*[idPoint =${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance}, realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
-        }
-        Log.d("Log", "$str1")
+//        val str = StringBuilder()
+//            listPoints.forEach{
+//                str!!.append("[idPoint = ${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance},realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
+//            }
+//        Log.d("Log", str.toString())
+//
+//        val str1 = StringBuilder()
+//        scaledListPoints.forEach{
+//            str1!!.append("*[idPoint =${it.idPoint} , ${it.x} , ${it.y} , dist ${it.distance}, realdist ${it.realDistance}, mX ${it.middleX}, mY ${it.middleY}]")
+//        }
+//        Log.d("Log", "$str1")
 
     }
 
@@ -359,19 +355,19 @@ class MyCanvasView(context: Context) : View(context){
         //   val rectfDest = RectF()
         val matrix = Matrix()
         matrix.reset()
-        if(isToEdge){
+        if (isToEdge) {
             //10% on ширины девайса
-             val bounds = (extraCanvas.width*0.1).toFloat()
+            val bounds = (extraCanvas.width * 0.1).toFloat()
             //прямоугольник-рамка для вписания
 
             val rectfDest = RectF()
             rectfDest.set(bounds, bounds, extraCanvas.width - bounds, extraCanvas.height - bounds)
             //вычисление границ чертежа и присвоение этих границ прямоугольнику
-             path.computeBounds(rectfBounds, true);
+            path.computeBounds(rectfBounds, true);
             //матрица выполняющая вписание одного прямоугольника в другой
             matrix.setRectToRect(rectfBounds, rectfDest, Matrix.ScaleToFit.CENTER);
-        // попробую найти матрицу по краям чечежа и увеличить её
-        }else{
+            // попробую найти матрицу по краям чечежа и увеличить её
+        } else {
             matrix.setRectToRect(rectfBounds, rectfBounds, Matrix.ScaleToFit.CENTER);
         }
 
@@ -383,7 +379,7 @@ class MyCanvasView(context: Context) : View(context){
 //            path.transform(matrix, pathDest);
 //        }
         path.transform(matrix, pathDest);
-      //  extraCanvas.drawPath(path,paint)
+        //  extraCanvas.drawPath(path,paint)
 
         paint.color = Color.GREEN
         //здесь находим новые точки с помощью матрицы matrix.mapPoints()
@@ -397,7 +393,7 @@ class MyCanvasView(context: Context) : View(context){
         }
         //    Log.d("log",arrF.joinToString("          ;"))
         matrix.mapPoints(arrF)
-           Log.d("log", arrF.joinToString("          ;"))
+        Log.d("log", arrF.joinToString("          ;"))
         //   extraCanvas.drawPath(pathDest, paint)
         iter = 0
         //меняю ху на преобразованые из матрицы
@@ -441,10 +437,10 @@ class MyCanvasView(context: Context) : View(context){
             //условие при котором мы сравниваем радиус точки касания с нашей серединой отрезка
             if (circleRadiusForEdit >= h && h != 0f) {
                 //здесь мы каснёмся последнего отрезка и Тостуем
-//        if(listPointsEdited[i].idPoint == listPointsEdited.size-1){//TODO его надо редактировать чтобы точка смешалась редактируя последний угол,но не задивая последнюю длину
-//        Toast.makeText(context, R.string.lastDistance, Toast.LENGTH_LONG).show()
-//        break
-//        }
+        if(listPointsEdited[i].idPoint == listPointsEdited.size-1){//TODO его надо редактировать чтобы точка смешалась редактируя последний угол,но не задивая последнюю длину
+        Toast.makeText(context, R.string.lastDistance, Toast.LENGTH_LONG).show()
+        break
+        }
                 // рисуем выделение красным
                 val xy = calcStartPoint(listPointsEdited[i])
                 pathEdit.moveTo(xy[0], xy[1])
@@ -452,7 +448,7 @@ class MyCanvasView(context: Context) : View(context){
                 extraCanvas.drawPath(pathEdit, paintEdit)
                 //Запускаю активити
                 startForResult.launch(Intent(context, EditSide::class.java).apply {
-                    putExtra("idPoint",listPointsEdited[i].idPoint)
+                    putExtra("idPoint", listPointsEdited[i].idPoint)
                 })
                 break
             }
@@ -483,9 +479,9 @@ class MyCanvasView(context: Context) : View(context){
                 if (it.middleX != 0 && it.middleY != 0 && it.idPoint != 0) {
 
                     //подменяю длину из начального листа
-                   // distStr = (roundOffDecimal(listPoints[it.idPoint].distance,"#"))
+                    // distStr = (roundOffDecimal(listPoints[it.idPoint].distance,"#"))
                     distStr = (roundOffDecimal(listPoints[it.idPoint].distance, "#"))
-                 //   distStr = (roundOffDecimal(it.distance,"#"))
+                    //   distStr = (roundOffDecimal(it.distance,"#"))
 
                     val xy = calcStartPoint(it)
                     path2.moveTo(xy[0], xy[1])
@@ -496,22 +492,22 @@ class MyCanvasView(context: Context) : View(context){
                     it.realDistance = realDist
                     widthText = p.measureText(distStr);
                     //увловие для последнего отрезка, беру значение не из увеличенного листа а из первого листа
-                    if(it.idPoint == scaledListPoints.size-1 ){
+                    if (it.idPoint == scaledListPoints.size - 1) {
                         distStr = roundOffDecimal(listPoints.last().distance, "#")
                     }
-                  //  extraCanvas.drawTextOnPath(distStr, path2, (realDist - widthText) / 2, -10F, p)
-                    p.color= drawColor
+                    //  extraCanvas.drawTextOnPath(distStr, path2, (realDist - widthText) / 2, -10F, p)
+                    p.color = drawColor
 
 
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                         extraCanvas.drawRoundRect(it.middleX.toFloat() - widthText / 2, it.middleY.toFloat() + textSize / 2,
                                 it.middleX.toFloat() + widthText / 2, it.middleY - textSize / 2, 8f, 8f, p)
-                    }else{
+                    } else {
                         extraCanvas.drawRect(it.middleX.toFloat() - widthText / 2, it.middleY.toFloat() + textSize / 2,
                                 it.middleX.toFloat() + widthText / 2, it.middleY - textSize / 2, p)
                     }
 
-                    p.color= Color.BLACK
+                    p.color = Color.BLACK
                     extraCanvas.drawText(distStr, it.middleX.toFloat() - (widthText / 2), it.middleY + (textSize / 2 - STROKE_WIDTH / 2), p)
 
                     path2.reset()
@@ -526,19 +522,19 @@ class MyCanvasView(context: Context) : View(context){
                     path2.moveTo(xy[0], xy[1])
                     path2.lineTo(it.x.toFloat(), it.y.toFloat())
                     widthText = p.measureText(distStr);
-                    p.color= drawColor
+                    p.color = drawColor
 
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                         extraCanvas.drawRoundRect(it.middleX.toFloat() - widthText / 2, it.middleY.toFloat() + textSize / 2,
                                 it.middleX.toFloat() + widthText / 2, it.middleY - textSize / 2, 8f, 8f, p)
-                    }else{
+                    } else {
                         extraCanvas.drawRect(it.middleX.toFloat() - widthText / 2, it.middleY.toFloat() + textSize / 2,
                                 it.middleX.toFloat() + widthText / 2, it.middleY - textSize / 2, p)
                     }
-                    p.color= Color.BLACK
+                    p.color = Color.BLACK
 
                     extraCanvas.drawText(distStr, it.middleX.toFloat() - (widthText / 2), it.middleY + (textSize / 2 - STROKE_WIDTH / 2), p)
-                  //  extraCanvas.drawTextOnPath(distStr, path2, (it.distance.toInt() - widthText) / 2, -10F, p)
+                    //  extraCanvas.drawTextOnPath(distStr, path2, (it.distance.toInt() - widthText) / 2, -10F, p)
                     path2.reset()
                 }
             }
@@ -549,7 +545,7 @@ class MyCanvasView(context: Context) : View(context){
     private fun calcAllNextPoints(editedListPoints: MutableList<MyPoint>, idPoint: Int, length: Int): MutableList<MyPoint> {
 
         //условие если первая коректировка длины
-        if(isFirstEditForScale){
+        if (isFirstEditForScale) {
 
             for (i in 0 until editedListPoints.size) {
                 if (editedListPoints[i].idPoint == idPoint) {
@@ -558,15 +554,15 @@ class MyCanvasView(context: Context) : View(context){
 
                     var realDistanceScaled = length * coefici
 
-                    val coefForMashtaba = length /editedListPoints[i].realDistance
+                    val coefForMashtaba = length / editedListPoints[i].realDistance
                     editedListPoints[i].distance = length.toFloat()
 
                     //меняю точки следующие за редактируемым отрезком
-                    for(j in 1 until editedListPoints.size){
+                    for (j in 1 until editedListPoints.size) {
                         //выбрасвваю если то же id что и редактируемое
-                        if(editedListPoints[j].idPoint ==idPoint) {
+                        if (editedListPoints[j].idPoint == idPoint) {
                             realDistanceScaled = editedListPoints[j].distance
-                        }else{
+                        } else {
                             realDistanceScaled = editedListPoints[j].distance * coefForMashtaba
                         }
 
@@ -574,41 +570,40 @@ class MyCanvasView(context: Context) : View(context){
                         editedListPoints[j].x = (editedListPoints[j - 1].x + realDistanceScaled * editedListPoints[j].mCos).toInt()
                         editedListPoints[j].y = (editedListPoints[j - 1].y + realDistanceScaled * editedListPoints[j].mSin).toInt()
 
-                        editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
-                        editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
+                        editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x) / 2
+                        editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y) / 2
 
 
                         //уловие для отбора листа увеличенного или нет
 
-                            editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x, editedListPoints[j].y,
-                                    editedListPoints[j - 1].x, editedListPoints[j - 1].y)
+                        editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x, editedListPoints[j].y,
+                                editedListPoints[j - 1].x, editedListPoints[j - 1].y)
 
 
 
-                        if(editedListPoints[j].idPoint ==idPoint) {
+                        if (editedListPoints[j].idPoint == idPoint) {
                             editedListPoints[j].distance = editedListPoints[j].distance
-                        }else{
-                            editedListPoints[j].distance = editedListPoints[j].distance*coefForMashtaba
+                        } else {
+                            editedListPoints[j].distance = editedListPoints[j].distance * coefForMashtaba
                         }
 
 
-
                         //последний отрезок
-                        if(j == editedListPoints.size-1){
+                        if (j == editedListPoints.size - 1) {
                             editedListPoints[j].x = editedListPoints[0].x
                             editedListPoints[j].y = editedListPoints[0].y
-                            editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
-                            editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
+                            editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x) / 2
+                            editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y) / 2
                             editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x, editedListPoints[0].y,
                                     editedListPoints[j - 1].x, editedListPoints[j - 1].y)
-                            editedListPoints[j].distance = editedListPoints[j].realDistance/coefici
+                            editedListPoints[j].distance = editedListPoints[j].realDistance / coefici
 
                         }
                     }
                 }
             }
             isFirstEditForScale = false
-        }else{
+        } else {
 
             for (i in 0 until editedListPoints.size) {
 
@@ -619,43 +614,40 @@ class MyCanvasView(context: Context) : View(context){
                     editedListPoints[i].distance = length.toFloat()
                     editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
                     editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
-                    editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
-                    editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
-
+                    editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x) / 2
+                    editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y) / 2
                     editedListPoints[i].realDistance = realDistanceScaled
-                    //todo надо пробижаться с изменениями не только вперед но и назад , если редактировать размеры не по часовой пропорции все ломаются
                     //меняю точки следующие за редактируемым отрезком
-                    for(j in 1 until editedListPoints.size){
+                    for (j in 1 until editedListPoints.size) {
 
                         realDistanceScaled = editedListPoints[j].distance * coefici
                         editedListPoints[j].x = (editedListPoints[j - 1].x + realDistanceScaled * editedListPoints[j].mCos).toInt()
                         editedListPoints[j].y = (editedListPoints[j - 1].y + realDistanceScaled * editedListPoints[j].mSin).toInt()
 
-                        editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
-                        editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
-//todo ошибка по диагонали неправильно пересчитывается, не вводится моё значение вероятно надо как то привязаться к id редактированного отрезка
+                        editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x) / 2
+                        editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y) / 2
                         editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x, editedListPoints[j].y,
                                 editedListPoints[j - 1].x, editedListPoints[j - 1].y)
-                        editedListPoints[j].distance = editedListPoints[j].realDistance/coefici
+                        editedListPoints[j].distance = editedListPoints[j].realDistance / coefici
 
-                        if(j == editedListPoints.size-1){
+                        //вычисляется последний отрезок
+                        if (j == editedListPoints.size - 1) {
                             editedListPoints[j].x = editedListPoints[0].x
                             editedListPoints[j].y = editedListPoints[0].y
-                            editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
-                            editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
+                            editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x) / 2
+                            editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y) / 2
                             editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x, editedListPoints[0].y,
                                     editedListPoints[j - 1].x, editedListPoints[j - 1].y)
-                            editedListPoints[j].distance = editedListPoints[j].realDistance/coefici
+                            editedListPoints[j].distance = editedListPoints[j].realDistance / coefici
 
                         }
                     }
                 }
             }
-
         }
-
         return editedListPoints
     }
+
     private fun calcAllNextPointsForFirstList(editedListPoints: MutableList<MyPoint>, idPoint: Int,
                                               length: Int): MutableList<MyPoint> {
 
@@ -663,35 +655,33 @@ class MyCanvasView(context: Context) : View(context){
         for (i in 0 until editedListPoints.size) {
             if (editedListPoints[i].idPoint == idPoint) {
 
-               // val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
                 var realDistanceScaled = length
 
                 editedListPoints[i].distance = length.toFloat()
                 editedListPoints[i].x = (editedListPoints[i - 1].x + realDistanceScaled * editedListPoints[i].mCos).toInt()
                 editedListPoints[i].y = (editedListPoints[i - 1].y + realDistanceScaled * editedListPoints[i].mSin).toInt()
-                editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x)/2
-                editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y)/2
+                editedListPoints[i].middleX = (editedListPoints[i].x + editedListPoints[i - 1].x) / 2
+                editedListPoints[i].middleY = (editedListPoints[i].y + editedListPoints[i - 1].y) / 2
 
                 editedListPoints[i].realDistance = realDistanceScaled.toFloat()
-                 //меняю точки следующие за редактируемым отрезком
-                for(j in 1 until editedListPoints.size){
+                //меняю точки следующие за редактируемым отрезком
+                for (j in 1 until editedListPoints.size) {
 
                     realDistanceScaled = editedListPoints[j].distance.toInt()
                     editedListPoints[j].x = (editedListPoints[j - 1].x + realDistanceScaled * editedListPoints[j].mCos).toInt()
                     editedListPoints[j].y = (editedListPoints[j - 1].y + realDistanceScaled * editedListPoints[j].mSin).toInt()
 
-                    editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
-                    editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
-//todo ошибка по диагонали неправильно пересчитывается, не вводится моё значение вероятно надо как то привязаться к id редактированного отрезка
+                    editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x) / 2
+                    editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y) / 2
                     editedListPoints[j].realDistance = calcDistance(editedListPoints[j].x, editedListPoints[j].y,
                             editedListPoints[j - 1].x, editedListPoints[j - 1].y)
                     editedListPoints[j].distance = editedListPoints[j].realDistance
 
-                    if(j == editedListPoints.size-1){
+                    if (j == editedListPoints.size - 1) {
                         editedListPoints[j].x = editedListPoints[0].x
                         editedListPoints[j].y = editedListPoints[0].y
-                        editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x)/2
-                        editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y)/2
+                        editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x) / 2
+                        editedListPoints[j].middleY = (editedListPoints[j].y + editedListPoints[j - 1].y) / 2
                         editedListPoints[j].realDistance = calcDistance(editedListPoints[0].x, editedListPoints[0].y,
                                 editedListPoints[j - 1].x, editedListPoints[j - 1].y)
                         editedListPoints[j].distance = editedListPoints[j].realDistance
@@ -702,11 +692,11 @@ class MyCanvasView(context: Context) : View(context){
         }
 
 
-    return editedListPoints
+        return editedListPoints
     }
 
     //отображаем площадь и периметр
-    private fun drawSquarePerimetr(listPoints: MutableList<MyPoint>) {
+    private fun drawSquarePerimeter(listPoints: MutableList<MyPoint>) {
         val arrX = mutableListOf<Int>()
         val arrY = mutableListOf<Int>()
         var numPoints = listPoints.size - 1
@@ -752,9 +742,7 @@ class MyCanvasView(context: Context) : View(context){
         canvas.drawBitmap(extraBitmap, 0f, 0f, null)
     }
 
-
 }
-
 
 data class MyPoint(var x: Int, var y: Int, var idPoint: Int = 0, var distance: Float = 0f,
                    var mCos: Float = 0f, var mSin: Float = 0f, var middleX: Int = 0, var middleY: Int = 0, var realDistance: Float = 0f)
