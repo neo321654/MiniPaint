@@ -32,10 +32,17 @@ class MyCanvasView(context: Context) : View(context) {
             val intent = result.data!!
             val idPoint = intent.getIntExtra("idPoint", 10)
             val dist = intent.getIntExtra("length", 10)
+            val isLast = intent.getBooleanExtra("isLast", false)
+           // Toast.makeText(context,"$isLast",Toast.LENGTH_SHORT).show()
+
+
+
+
 
             //чтобы не было повторного нажатия диалога
             motionTouchEventX = 0f
             motionTouchEventY = 0f
+
 
 
             //это условие для того чтобы применить первое маштабирование , желательно зарефакторить
@@ -51,6 +58,15 @@ class MyCanvasView(context: Context) : View(context) {
             scaleCanvasToEdge()
             touchDown()
             touchUp()
+
+            //todo написать тестовою отрисовку на канвасе , надо перенести ниже
+            if(isLast){
+                val pathTest = Path()
+                pathTest.moveTo(scaledListPoints.last().x.toFloat(),
+                        scaledListPoints.last().y.toFloat())
+                pathTest.lineTo(100f,100f)
+                extraCanvas.drawPath(pathTest,paint)
+            }
         }
     }
 
@@ -439,6 +455,16 @@ class MyCanvasView(context: Context) : View(context) {
                 //здесь мы каснёмся последнего отрезка и Тостуем
         if(listPointsEdited[i].idPoint == listPointsEdited.size-1){//TODO его надо редактировать чтобы точка смешалась редактируя последний угол,но не задивая последнюю длину
         Toast.makeText(context, R.string.lastDistance, Toast.LENGTH_LONG).show()
+            // рисуем выделение красным
+            val xy = calcStartPoint(listPointsEdited[i])
+            pathEdit.moveTo(xy[0], xy[1])
+            pathEdit.lineTo(listPointsEdited[i].x.toFloat(), listPointsEdited[i].y.toFloat())
+            extraCanvas.drawPath(pathEdit, paintEdit)
+            //Запускаю активити
+            startForResult.launch(Intent(context, EditSide::class.java).apply {
+                putExtra("idPoint", listPointsEdited[i].idPoint)
+                putExtra("isLast", true)
+            })
         break
         }
                 // рисуем выделение красным
@@ -449,6 +475,7 @@ class MyCanvasView(context: Context) : View(context) {
                 //Запускаю активити
                 startForResult.launch(Intent(context, EditSide::class.java).apply {
                     putExtra("idPoint", listPointsEdited[i].idPoint)
+                    putExtra("isLast", false)
                 })
                 break
             }
@@ -606,7 +633,8 @@ class MyCanvasView(context: Context) : View(context) {
         } else {
 
             for (i in 0 until editedListPoints.size) {
-
+//todo ввести уловие для последнего отрезка и не переделывать весь лист, то же сделать для не моштабируемого листа
+    
                 if (editedListPoints[i].idPoint == idPoint) {
 
                     val coefici = editedListPoints[i].realDistance / editedListPoints[i].distance
@@ -632,6 +660,7 @@ class MyCanvasView(context: Context) : View(context) {
 
                         //вычисляется последний отрезок
                         if (j == editedListPoints.size - 1) {
+                            //todo сдесь всё поменять для редакторования последнего если id last
                             editedListPoints[j].x = editedListPoints[0].x
                             editedListPoints[j].y = editedListPoints[0].y
                             editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x) / 2

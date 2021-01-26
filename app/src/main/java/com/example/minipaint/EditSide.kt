@@ -13,6 +13,7 @@ class EditSide : Activity() {
 
     lateinit var bi: ActivityEditSideBinding
     private var idPoint: Int = 0
+    private var isLast: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,6 +24,7 @@ class EditSide : Activity() {
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
         //получаю id точки
         idPoint = intent.getIntExtra("idPoint", 0)
+        isLast = intent.getBooleanExtra("isLast", false)
         bi.needLenght.setOnKeyListener { v, keyCode, _ ->
             if (keyCode == KeyEvent.KEYCODE_ENTER) {
                 sendIntent(v)
@@ -41,6 +43,8 @@ class EditSide : Activity() {
             val intent = Intent()
             intent.putExtra("length", lengthInt)
             intent.putExtra("idPoint", idPoint)
+            intent.putExtra("isLast", isLast)
+
             setResult(RESULT_OK, intent)
             finish()
         } catch (e: NumberFormatException) {
