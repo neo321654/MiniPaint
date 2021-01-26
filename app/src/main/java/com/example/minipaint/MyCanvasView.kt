@@ -15,6 +15,8 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
+import java.lang.Math.pow
+import kotlin.math.*
 
 
 private const val STROKE_WIDTH = 6f
@@ -64,11 +66,41 @@ class MyCanvasView(context: Context) : View(context) {
                 val pathTest = Path()
                 pathTest.moveTo(scaledListPoints.last().x.toFloat(),
                         scaledListPoints.last().y.toFloat())
-                pathTest.lineTo(100f,100f)
+
+                val xy = calcThirdPick(scaledListPoints.last().x.toFloat(), scaledListPoints.last().y.toFloat(),
+                        scaledListPoints[scaledListPoints.size-3].x.toFloat(), scaledListPoints[scaledListPoints.size-3].y.toFloat(),
+                        scaledListPoints.last().distance,scaledListPoints[scaledListPoints.size-2].distance)
+              Log.d("log","$xy")
+                  pathTest.lineTo(xy[0],xy[1])
+                //pathTest.lineTo(100f,100f)
+                paint.color=Color.BLACK
                 extraCanvas.drawPath(pathTest,paint)
             }
         }
     }
+
+    private fun calcThirdPick(x1: Float, y1:Float, x2: Float, y2:Float, sideA:Float, sideB:Float, prevX:Float = 0f, prevY:Float= 0f): List<Float> {
+
+       val sideC = sqrt((x1 -x2).pow(2)+(y1-y2).pow(2))
+        Log.d("log","$sideC")
+        //todo acos может не правильно работать т.к. Оси по другому располагаются
+        var xToCos =(sideC.pow(2)+sideB.pow(2)-sideA.pow(2))/(2*sideC*sideB)
+
+        Log.d("log","xToCosFirst  $xToCos")
+        xToCos = (xToCos%Math.PI*2).toFloat()
+        Log.d("log","xToCos  $xToCos")
+        val corA = acos(xToCos)
+
+        Log.d("log","$corA")
+        val x3 = x1 +sideB* cos(atan2(x2-x1,y2-y1) +corA)
+        val y3 = y1 +sideB* sin(atan2(x2-x1,y2-y1) +corA)
+        return listOf<Float>(x3,y3)
+    }
+
+
+
+
+
 
     private val textSize = 40f
     private var isFigureDone = false
