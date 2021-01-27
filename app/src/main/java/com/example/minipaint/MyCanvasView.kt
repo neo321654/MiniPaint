@@ -69,7 +69,7 @@ class MyCanvasView(context: Context) : View(context) {
 
                 val xy = calcThirdPick(scaledListPoints.last().x.toFloat(), scaledListPoints.last().y.toFloat(),
                         scaledListPoints[scaledListPoints.size-3].x.toFloat(), scaledListPoints[scaledListPoints.size-3].y.toFloat(),
-                        scaledListPoints.last().realDistance,scaledListPoints[scaledListPoints.size-2].realDistance)
+                        dist.toFloat() ,scaledListPoints[scaledListPoints.size-2].realDistance)
               Log.d("log","$xy")
                   pathTest.lineTo(xy[0],xy[1])
                 //pathTest.lineTo(100f,100f)
