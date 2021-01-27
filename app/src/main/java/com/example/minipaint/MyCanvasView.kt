@@ -37,10 +37,6 @@ class MyCanvasView(context: Context) : View(context) {
             val isLast = intent.getBooleanExtra("isLast", false)
            // Toast.makeText(context,"$isLast",Toast.LENGTH_SHORT).show()
 
-
-
-
-
             //чтобы не было повторного нажатия диалога
             motionTouchEventX = 0f
             motionTouchEventY = 0f
@@ -70,23 +66,25 @@ class MyCanvasView(context: Context) : View(context) {
                 val xy = calcThirdPick(scaledListPoints.last().x.toFloat(), scaledListPoints.last().y.toFloat(),
                         scaledListPoints[scaledListPoints.size-3].x.toFloat(), scaledListPoints[scaledListPoints.size-3].y.toFloat(),
                         dist.toFloat() ,scaledListPoints[scaledListPoints.size-2].realDistance)
-              Log.d("log","$xy")
+
+            //  Log.d("log","$xy")
                   pathTest.lineTo(xy[0],xy[1])
                 //pathTest.lineTo(100f,100f)
                 paint.color=Color.BLACK
                 extraCanvas.drawPath(pathTest,paint)
             }
+
         }
     }
 
     private fun calcThirdPick(x1: Float, y1:Float, x2: Float, y2:Float, sideB:Float, sideA:Float, prevX:Float = 0f, prevY:Float= 0f): List<Float> {
 
-        Log.d("log","x1 $x1")
-        Log.d("log","y1 $y1")
-        Log.d("log","x2 $x2")
-        Log.d("log","y2 $y2")
-        Log.d("log","sideA $sideA")
-        Log.d("log","sideB $sideB")
+//        Log.d("log","x1 $x1")
+//        Log.d("log","y1 $y1")
+//        Log.d("log","x2 $x2")
+//        Log.d("log","y2 $y2")
+//        Log.d("log","sideA $sideA")
+//        Log.d("log","sideB $sideB")
 
        val sideC = sqrt((x1 -x2).pow(2)+(y1-y2).pow(2))
         Log.d("log","$sideC")
@@ -104,10 +102,6 @@ class MyCanvasView(context: Context) : View(context) {
         val y3 = y1 +sideB* cos(atan2(x2-x1,y2-y1) -corA)
         return listOf<Float>(x3,y3)
     }
-
-
-
-
 
 
     private val textSize = 40f
