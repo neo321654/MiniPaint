@@ -69,7 +69,7 @@ class MyCanvasView(context: Context) : View(context) {
 
                 val xy = calcThirdPick(scaledListPoints.last().x.toFloat(), scaledListPoints.last().y.toFloat(),
                         scaledListPoints[scaledListPoints.size-3].x.toFloat(), scaledListPoints[scaledListPoints.size-3].y.toFloat(),
-                        scaledListPoints.last().distance,scaledListPoints[scaledListPoints.size-2].distance)
+                        scaledListPoints.last().realDistance,scaledListPoints[scaledListPoints.size-2].realDistance)
               Log.d("log","$xy")
                   pathTest.lineTo(xy[0],xy[1])
                 //pathTest.lineTo(100f,100f)
@@ -79,7 +79,14 @@ class MyCanvasView(context: Context) : View(context) {
         }
     }
 
-    private fun calcThirdPick(x1: Float, y1:Float, x2: Float, y2:Float, sideA:Float, sideB:Float, prevX:Float = 0f, prevY:Float= 0f): List<Float> {
+    private fun calcThirdPick(x1: Float, y1:Float, x2: Float, y2:Float, sideB:Float, sideA:Float, prevX:Float = 0f, prevY:Float= 0f): List<Float> {
+
+        Log.d("log","x1 $x1")
+        Log.d("log","y1 $y1")
+        Log.d("log","x2 $x2")
+        Log.d("log","y2 $y2")
+        Log.d("log","sideA $sideA")
+        Log.d("log","sideB $sideB")
 
        val sideC = sqrt((x1 -x2).pow(2)+(y1-y2).pow(2))
         Log.d("log","$sideC")
@@ -87,13 +94,14 @@ class MyCanvasView(context: Context) : View(context) {
         var xToCos =(sideC.pow(2)+sideB.pow(2)-sideA.pow(2))/(2*sideC*sideB)
 
         Log.d("log","xToCosFirst  $xToCos")
-        xToCos = (xToCos%Math.PI*2).toFloat()
+        //xToCos = (xToCos%Math.PI*2 ).toFloat()
         Log.d("log","xToCos  $xToCos")
         val corA = acos(xToCos)
 
         Log.d("log","$corA")
-        val x3 = x1 +sideB* cos(atan2(x2-x1,y2-y1) +corA)
-        val y3 = y1 +sideB* sin(atan2(x2-x1,y2-y1) +corA)
+        //todo переделать все формулы подбирал имперически
+        val x3 = x1 +sideB* sin(atan2(x2-x1,y2-y1) -corA)
+        val y3 = y1 +sideB* cos(atan2(x2-x1,y2-y1) -corA)
         return listOf<Float>(x3,y3)
     }
 
