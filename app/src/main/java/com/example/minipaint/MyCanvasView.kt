@@ -87,19 +87,22 @@ class MyCanvasView(context: Context) : View(context) {
 //        Log.d("log","sideB $sideB")
 
        val sideC = sqrt((x1 -x2).pow(2)+(y1-y2).pow(2))
-        Log.d("log","$sideC")
+       // Log.d("log","$sideC")
         //todo acos может не правильно работать т.к. Оси по другому располагаются
         var xToCos =(sideC.pow(2)+sideB.pow(2)-sideA.pow(2))/(2*sideC*sideB)
 
-        Log.d("log","xToCosFirst  $xToCos")
+      //  Log.d("log","xToCosFirst  $xToCos")
         //xToCos = (xToCos%Math.PI*2 ).toFloat()
-        Log.d("log","xToCos  $xToCos")
+     //   Log.d("log","xToCos  $xToCos")
         val corA = acos(xToCos)
 
-        Log.d("log","$corA")
+
         //todo переделать все формулы подбирал имперически
         val x3 = x1 +sideB* sin(atan2(x2-x1,y2-y1) -corA)
         val y3 = y1 +sideB* cos(atan2(x2-x1,y2-y1) -corA)
+
+        Log.d("log","xCalc = $x3 ; yCalc = $corA ;")
+
         return listOf<Float>(x3,y3)
     }
 
@@ -443,7 +446,7 @@ class MyCanvasView(context: Context) : View(context) {
         }
         //    Log.d("log",arrF.joinToString("          ;"))
         matrix.mapPoints(arrF)
-        Log.d("log", arrF.joinToString("          ;"))
+       // Log.d("log", arrF.joinToString("          ;"))
         //   extraCanvas.drawPath(pathDest, paint)
         iter = 0
         //меняю ху на преобразованые из матрицы
@@ -488,7 +491,7 @@ class MyCanvasView(context: Context) : View(context) {
             if (circleRadiusForEdit >= h && h != 0f) {
                 //здесь мы каснёмся последнего отрезка и Тостуем
         if(listPointsEdited[i].idPoint == listPointsEdited.size-1){//TODO его надо редактировать чтобы точка смешалась редактируя последний угол,но не задивая последнюю длину
-        Toast.makeText(context, R.string.lastDistance, Toast.LENGTH_LONG).show()
+     //   Toast.makeText(context, R.string.lastDistance, Toast.LENGTH_LONG).show()
             // рисуем выделение красным
             val xy = calcStartPoint(listPointsEdited[i])
             pathEdit.moveTo(xy[0], xy[1])
