@@ -22,7 +22,7 @@ import kotlin.math.*
 private const val STROKE_WIDTH = 6f
 
 class MyCanvasView(context: Context) : View(context) {
-
+//
     private var scaledListPoints: MutableList<MyPoint> = mutableListOf()
     private val circleRadius = 30f
 
