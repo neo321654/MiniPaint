@@ -22,7 +22,7 @@ import kotlin.math.*
 private const val STROKE_WIDTH = 6f
 
 class MyCanvasView(context: Context) : View(context) {
-//.....
+
     private var scaledListPoints: MutableList<MyPoint> = mutableListOf()
     private val circleRadius = 30f
 
@@ -71,6 +71,7 @@ class MyCanvasView(context: Context) : View(context) {
                   pathTest.lineTo(xy[0],xy[1])
                 //pathTest.lineTo(100f,100f)
                 paint.color=Color.BLACK
+                        //todo крутая штука breakpoint with log моих точек
                 extraCanvas.drawPath(pathTest,paint)
             }
 
