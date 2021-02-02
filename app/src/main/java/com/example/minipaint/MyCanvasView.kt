@@ -15,6 +15,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
+import java.lang.Float.NaN
 import java.lang.Math.pow
 import kotlin.math.*
 
@@ -66,6 +67,15 @@ class MyCanvasView(context: Context) : View(context) {
                 val xy = calcThirdPick(scaledListPoints.last().x.toFloat(), scaledListPoints.last().y.toFloat(),
                         scaledListPoints[scaledListPoints.size-3].x.toFloat(), scaledListPoints[scaledListPoints.size-3].y.toFloat(),
                         dist.toFloat() ,scaledListPoints[scaledListPoints.size-2].realDistance)
+                //иногда xy может возвращать Null в ячейках, а когда возвращает не нул делаем поправку 2х листпоинтов
+                if(!xy[0].isNaN()){
+                    // использовать xy для предпоследней точки dist.toFloat() для последней дистанции
+                    //todo завершить условие и провести тестирование, обратить внимание чтобы все назначенные отрезки были целыми числами
+
+                }//если не нашёл значение ничего не делаем
+
+
+
 
             //  Log.d("log","$xy")
                   pathTest.lineTo(xy[0],xy[1])
@@ -699,6 +709,7 @@ class MyCanvasView(context: Context) : View(context) {
                         //вычисляется последний отрезок
                         if (j == editedListPoints.size - 1) {
                             //todo сдесь всё поменять для редакторования последнего если id last
+
                             editedListPoints[j].x = editedListPoints[0].x
                             editedListPoints[j].y = editedListPoints[0].y
                             editedListPoints[j].middleX = (editedListPoints[j].x + editedListPoints[j - 1].x) / 2
