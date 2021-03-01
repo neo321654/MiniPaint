@@ -80,7 +80,7 @@ class MyCanvasView(context: Context) : View(context) {
 
 
 
-            //  Log.d("log","$xy")
+              Log.d("log","$xy")
                   pathTest.lineTo(xy[0],xy[1])
                 //pathTest.lineTo(100f,100f)
                 paint.color=Color.BLACK
@@ -99,6 +99,9 @@ class MyCanvasView(context: Context) : View(context) {
 //        Log.d("log","y2 $y2")
 //        Log.d("log","sideA $sideA")
 //        Log.d("log","sideB $sideB")
+
+
+        //todo необходимо занести в этот метод проверенные данные из гугл таблиц и посмотреть как он отрабатывает если всё ок, ошибка заключается в коллекциях и перересовке
 
        val sideC = sqrt((x1 -x2).pow(2)+(y1-y2).pow(2))
        // Log.d("log","$sideC")
