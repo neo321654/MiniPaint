@@ -827,6 +827,6 @@ class MyCanvasView(context: Context) : View(context) {
     }
 
 }
-
+//todo посмотрел по пьяни myPoint etc
 data class MyPoint(var x: Int, var y: Int, var idPoint: Int = 0, var distance: Float = 0f,
                    var mCos: Float = 0f, var mSin: Float = 0f, var middleX: Int = 0, var middleY: Int = 0, var realDistance: Float = 0f)
